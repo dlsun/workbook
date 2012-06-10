@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request
 import os, shutil, glob, json
 
+from IPython.nbformat import current as nbformat
+
 PATH_TO_HW_FILES = 'notebooks/'
 PATH_TO_HW_TEMPLATES = 'hw_templates/'
 
@@ -47,20 +49,8 @@ def hw(nb):
 def load_nb(nb):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
-    nb = json.loads(open(filename).read())
-    # crawl through JSON object
-    for w in nb['worksheets']:
-        for c in w['cells']:
-            # for some bizarre reason, the default notebook flattens certain arrays to string, 
-            # so we do the same for consistency
-            if 'input' in c:
-                c['input'] = '\n'.join(c['input'])
-            if 'outputs' in c:
-                for o in c['outputs']:
-                    if 'text' in o:
-                        o['text'] = '\n'.join(o['text'])
-            if 'source' in c:
-                c['source'] = '\n'.join(c['source'])
+    nb = nbformat.read(open(filename, 'rb'), 'json')
+    #nb = rejoin_lines(nb)
     return json.dumps(nb)
 
 # save the JSON file of the notebook
@@ -68,20 +58,21 @@ def load_nb(nb):
 def save_nb(nb):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
-    nb = json.loads(request.data)
-    # crawl through JSON object
-    for w in nb['worksheets']:
-        for c in w['cells']:
-            # now we do the reverse of the above
-            if 'input' in c:
-                c['input'] = c['input'].split('\n')
-            if 'outputs' in c:
-                for o in c['outputs']:
-                    if 'text' in o:
-                        o['text'] = o['text'].split('\n')
-            if 'source' in c:
-                c['source'] = c['source'].split('\n')
-    open(filename,'w').write(json.dumps(nb))
+    nb = nbformat.reads(request.data, 'json')
+#     for w in nb['worksheets']:
+#         for c in w['cells']:
+#             # now we do the reverse of the above
+#             if 'input' in c:
+#                 c['input'] = c['input'].split('\n')
+#             if 'outputs' in c:
+#                 for o in c['outputs']:
+#                     if 'text' in o:
+#                         o['text'] = o['text'].split('\n')
+#             if 'source' in c:
+#                 c['source'] = c['source'].split('\n')
+#     nbs = nbformat.parse_json(request.data)
+#     print 'nbs:', nbs
+    nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
 
 # start server
