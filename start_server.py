@@ -50,7 +50,6 @@ def load_nb(nb):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
-    #nb = rejoin_lines(nb)
     return json.dumps(nb)
 
 # save the JSON file of the notebook
