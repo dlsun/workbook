@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request
-import os, json
+import os, shutil, glob, json
 
-PATH_TO_NB_FILES = 'notebooks/'
+PATH_TO_HW_FILES = 'notebooks/'
+PATH_TO_HW_TEMPLATES = 'hw_templates/'
 
 app = Flask(__name__)
 
@@ -25,9 +26,12 @@ def index():
     # parse headers to get user information
     user = check_user(request)
     # see if user has his own directory; if not, make one
-    folder = PATH_TO_NB_FILES + user['id']
+    folder = os.path.join(PATH_TO_HW_FILES, user['id'])
     if not os.path.exists(folder):
         os.makedirs(folder)
+        # copy files from master directory to newly made folder
+        for hw_file in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'*.ipynb')):
+            shutil.copy(hw_file,folder)
     # get a list of all the notebooks in directory
     nbs = [ nb[:-6] for nb in os.listdir(folder) ] # strip .ipynb from filename
     return render_template('index.html',user = user,nbs=nbs)
@@ -42,7 +46,7 @@ def hw(nb):
 @app.route('/hw/<nb>/load', methods=['GET'])
 def load_nb(nb):
     user = check_user(request)
-    filename = PATH_TO_NB_FILES + user['id'] + '/' + nb + '.ipynb'
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
     nb = json.loads(open(filename).read())
     # crawl through JSON object
     for w in nb['worksheets']:
@@ -63,7 +67,7 @@ def load_nb(nb):
 @app.route('/hw/<nb>/save', methods=['PUT'])
 def save_nb(nb):
     user = check_user(request)
-    filename = PATH_TO_NB_FILES + user['id'] + '/' + nb + '.ipynb'
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
     nb = json.loads(request.data)
     # crawl through JSON object
     for w in nb['worksheets']:
