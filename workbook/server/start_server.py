@@ -10,6 +10,7 @@ from workbook.converters.owner import StudentOwner, RemoveOwner
 from workbook.converters import compose_converters
 
 from workbook.utils.homework_creator import create_assignment
+from workbook.utils.questions import find_identified_cell
 
 PATH_TO_HW_FILES = '/Users/jonathantaylor/workbook/notebooks/'
 PATH_TO_HW_TEMPLATES = '/Users/jonathantaylor/workbook/hw_templates/'
@@ -82,13 +83,19 @@ def save_nb(nbname):
     return request.data
 
 # load the JSON file of the notebook
-@app.route('/hw/<nb>/check', methods=['GET'])
-def check_nb(nb):
-    import sys
-    sys.stderr.write(`request`)
-    return json.dumps(nb)
+@app.route('/hw/<nbname>/check', methods=['GET'])
+def check_nb(nbname):
+    user = check_user(request)
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+    nb = nbformat.read(open(filename, 'rb'), 'json')
+    answers = {}
+    for identifier, answer in request.args.items():
+        output = find_identified_cell(nb, identifier)
+        answers[identifier] = {'answer': answer, 'correct_answer': output.json.correct_answer}
+    return json.dumps(answers)
 
 # start server
+
 
 def main():
     app.run(debug=True,host='0.0.0.0')

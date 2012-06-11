@@ -66,3 +66,24 @@ def true_false(question_text, correct_answer, identifier):
                                                                   'checkable':True,
                                                                   'correct_answer':correct_answer}})
 
+def is_identified_cell(cell, identifier):
+    if hasattr(cell, 'outputs'):
+        for output in cell.outputs:
+            if 'json' in output:
+                try:
+                    if 'question_identifier' in output.json.keys():
+                        print 'question_identifier', output.json['question_identifier']
+                        if output.json['question_identifier'] == identifier:
+                            return True, output
+                except AttributeError:
+                    pass
+    return False, None
+
+def find_identified_cell(nb, identifier):
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            check, value = is_identified_cell(cell, identifier)
+            if check:
+                return value
+    return None
+
