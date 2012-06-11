@@ -6,7 +6,7 @@ existing notebook.
 import copy, os, sys, shutil
 import glob
 from .execute_and_save import execute_and_save
-from ..converters import owner, encrypt
+from ..converters import owner, encrypt, sync_metadata_name
 
 sys.path.append('/Users/jonathantaylor/nbconvert') # to find nbconvert
 import nbconvert as nb
@@ -32,6 +32,7 @@ def create_assignment(assignmentbase, header, student_nb):
     outfile = merge_notebooks(os.path.join(odir, os.path.split(assignmentbase)[1]), student_nb, header, *questions)
     newfile = execute_and_save(outfile)
     os.rename(newfile, outfile)
+    sync_metadata_name(outfile)
     return outfile
 
 

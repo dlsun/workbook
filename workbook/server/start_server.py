@@ -45,7 +45,6 @@ def index():
         for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):
             outfile = create_assignment(hw_dir, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
                                         os.path.join(PATH_TO_STUDENTS,user['id'] + '.ipynb'))
-            print 'outfile:', outfile
             shutil.copy(outfile, folder)
     # get a list of all the notebooks in directory
     nb_files = glob.glob(os.path.join(folder,'*.ipynb'))
@@ -61,22 +60,24 @@ def hw(nb):
     return render_template('homework.html',nb = nb)
 
 # load the JSON file of the notebook
-@app.route('/hw/<nb>/load', methods=['GET'])
-def load_nb(nb):
+@app.route('/hw/<nbname>/load', methods=['GET'])
+def load_nb(nbname):
     user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
     nb = compose_converters(nb, EncryptTeacherInfo, StudentOwner)
+    nb.metadata.name = nbname
     nbformat.write(nb, file('test.ipynb','wb'), 'json')
     return json.dumps(nb)
 
 # save the JSON file of the notebook
-@app.route('/hw/<nb>/save', methods=['PUT'])
-def save_nb(nb):
+@app.route('/hw/<nbname>/save', methods=['PUT'])
+def save_nb(nbname):
     user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb+".ipynb")
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
     nb = compose_converters(nb, RemoveOwner, DecryptTeacherInfo)
+    nb.metadata.name = nbname
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
 
@@ -84,7 +85,7 @@ def save_nb(nb):
 @app.route('/hw/<nb>/check', methods=['GET'])
 def check_nb(nb):
     import sys
-    sys.stderr.write(request.args)
+    sys.stderr.write(`request`)
     return json.dumps(nb)
 
 # start server
