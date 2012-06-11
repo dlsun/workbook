@@ -62,9 +62,6 @@ def hw(nb):
 def load_nb(nb):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nb + '.ipynb')
-#     encryptor = encrypt.EncryptTeacherInfo(filename, 'encrypt')
-#     encryptor.read()
-#     encryptor.convert()
     nb = nbformat.read(open(filename, 'rb'), 'json')
     nb = compose_converters(nb, EncryptTeacherInfo, StudentOwner)
     nbformat.write(nb, file('test.ipynb','wb'), 'json')
@@ -79,6 +76,13 @@ def save_nb(nb):
     nb = compose_converters(nb, RemoveOwner, DecryptTeacherInfo)
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
+
+# load the JSON file of the notebook
+@app.route('/hw/<nb>/check', methods=['GET'])
+def check_nb(nb):
+    import sys
+    sys.stderr.write(request.args)
+    return json.dumps(nb)
 
 # start server
 
