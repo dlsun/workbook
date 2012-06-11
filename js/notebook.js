@@ -1273,6 +1273,29 @@ var IPython = (function (IPython) {
     };
 
 
+    Notebook.prototype.check_notebook = function () {
+        // We may want to move the name/id/nbformat logic inside toJSON?
+        var data = this.toJSON();
+        data.metadata.name = this.notebook_name;
+        data.nbformat = this.nbformat;
+        // We do the call with settings so we can set cache to false.
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "POST",
+            data : JSON.stringify(data),
+            headers : {'Content-Type': 'application/json'},
+	    contentType: 'application/json;charset=UTF-8', // added by Dennis
+            success : $.proxy(this.save_notebook_success,this),
+            error : $.proxy(this.save_notebook_error,this)
+        };
+        $([IPython.events]).trigger('notebook_saving.Notebook');
+        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
+	var url = '/hw/' + nb  + '/check'
+        $.ajax(url, settings);
+    };
+
+
     Notebook.prototype.save_notebook_success = function (data, status, xhr) {
         this.dirty = false;
         $([IPython.events]).trigger('notebook_saved.Notebook');
