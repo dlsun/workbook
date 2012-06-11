@@ -38,6 +38,7 @@ class HomeworkMagics(RMagics):
         self.lookup_questions = lookup_questions
         super(HomeworkMagics, self).__init__(shell)
         self.cache_display_data = True
+        self.counter = 1
 
     @magic_arguments()
     @argument(

@@ -531,6 +531,9 @@ var IPython = (function (IPython) {
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
                 cell = new IPython.MarkdownCell(this);
+            } else if (type === 'teacher') {
+                cell = new IPython.TeacherCell(this);
+		cell.read_only = true;
             } else if (type === 'html') {
                 cell = new IPython.HTMLCell(this);
             } else if (type === 'raw') {
@@ -593,7 +596,8 @@ var IPython = (function (IPython) {
         if (this.is_valid_cell_index(i)) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
-            if (!(source_cell instanceof IPython.CodeCell)) {
+            if (!(source_cell instanceof IPython.CodeCell) &&
+		!(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('code',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -612,7 +616,8 @@ var IPython = (function (IPython) {
         if (this.is_valid_cell_index(i)) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
-            if (!(source_cell instanceof IPython.MarkdownCell)) {
+	    if (!(source_cell instanceof IPython.MarkdownCell)  
+		&& !(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('markdown',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -623,7 +628,7 @@ var IPython = (function (IPython) {
                 target_cell.set_text(text);
                 source_element.remove();
                 this.dirty = true;
-            };
+	    };
         };
     };
 
@@ -634,7 +639,8 @@ var IPython = (function (IPython) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
             var target_cell = null;
-            if (!(source_cell instanceof IPython.HTMLCell)) {
+	    if (!(source_cell instanceof IPython.HTMLCell)  
+		&& !(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('html',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -656,7 +662,8 @@ var IPython = (function (IPython) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
             var target_cell = null;
-            if (!(source_cell instanceof IPython.RawCell)) {
+	    if (!(source_cell instanceof IPython.RawCell)  
+		&& !(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('raw',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -681,7 +688,7 @@ var IPython = (function (IPython) {
             var target_cell = null;
             if (source_cell instanceof IPython.HeadingCell) {
                 source_cell.set_level(level);
-            } else {
+            } else if (!source_cell.read_only) {
                 target_cell = this.insert_cell_below('heading',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -699,6 +706,7 @@ var IPython = (function (IPython) {
             );
         };
     };
+
 
 
     // Cut/Copy/Paste
@@ -1214,6 +1222,10 @@ var IPython = (function (IPython) {
                 // handle never-released plaintext name for raw cells
                 if (cell_data.cell_type === 'plaintext'){
                     cell_data.cell_type = 'raw';
+                }
+                
+                if (cell_data.owner === 'teacher'){
+                    cell_data.cell_type = 'teacher';
                 }
                 
                 new_cell = this.insert_cell_below(cell_data.cell_type);

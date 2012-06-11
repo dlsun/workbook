@@ -8,9 +8,11 @@ import base64
 def find_owner(cell):
     for output in cell.outputs:
         if 'json' in output:
-            if 'owner' in output.json.keys():
-                print 'owner:', output.json['owner']
-                return output.json['owner']
+            try:
+                if 'owner' in output.json.keys():
+                    return output.json['owner']
+            except:
+                pass
     return None
 
 class StudentOwner(nbc.ConverterNotebook):
@@ -53,25 +55,24 @@ class TAOwner(StudentOwner):
     default_owner = 'TA'
 
 class RemoveOwner(nbc.ConverterNotebook):
-    default_owner = 'TA'
 
     def render_heading(self, cell):
-        if owner in cell.keys():
+        if "owner" in cell.keys():
             del(cell.owner)
         return nbc.ConverterNotebook.render_heading(self, cell)
 
     def render_code(self, cell):
-        if owner in cell.keys():
+        if "owner" in cell.keys():
             del(cell.owner)
         return nbc.ConverterNotebook.render_code(self, cell)
 
     def render_markdown(self, cell):
-        if owner in cell.keys():
+        if "owner" in cell.keys():
             del(cell.owner)
         return nbc.ConverterNotebook.render_markdown(self, cell)
 
     def render_raw(self, cell):
-        if owner in cell.keys():
+        if "owner" in cell.keys():
             del(cell.owner)
         return nbc.ConverterNotebook.render_raw(self, cell)
 

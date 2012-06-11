@@ -110,6 +110,7 @@ def run_cell(km, cell):
             print "unhandled iopub msg:", msg_type
         
         outs.append(out)
+
     # if any input, mark owner as teacher,
     # else student
     owner = NotebookNode(output_type='display_data')
@@ -160,7 +161,7 @@ def execute_and_save(ipynb):
     converter = ConverterNotebook(ipynb, os.path.splitext(ipynb)[0] + '_executed')
     converter.read()
     execute_notebook(converter.nb)    
-    converter.render()
+    return converter.render()
 
 
 if __name__ == '__main__':

@@ -2,6 +2,9 @@ import numpy as np
 from IPython.core.displaypub import publish_display_data
 import json
 
+def question(number):
+    publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question 2</h2>"})
+
 def multiple_choice(question_text, choices, correct_answer, identifier):
     """
     Generate a multiple choice question with given text and choices, and name the input form identifier

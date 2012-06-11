@@ -9,11 +9,15 @@ import base64
 from Crypto import Random
 from Crypto.Cipher import AES
 
+from set_owner import find_owner
+
 class Cipher(object):
+    
+    # these will be read from disk somewhere
+    key = b'Sixteen byte key'
+    iv = 's\xa7\xdcXx\xab\rn\x18\x84\x9a\x15\x12lC-'
 
     def __init__(self):
-        self.key = b'Sixteen byte key'
-        self.iv = Random.new().read(AES.block_size)
         self.cipher = AES.new(self.key, AES.MODE_CFB, self.iv)
 
     def encrypt(self, msg):
@@ -26,18 +30,22 @@ class Cipher(object):
         decrypted_msg = self.cipher.decrypt(base64.b64decode(msg)).rstrip('[')
         return decrypted_msg[16:]
 
+cipher = Cipher()
+
 class EncryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        cell.input = cipher.encrypt(cell.input)
+        if find_owner(cell) == 'teacher':
+            cell.input = cipher.encrypt(cell.input)
         return nbc.ConverterNotebook.render_code(self, cell)
 
 class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        cell.input = cipher.decrypt(cell.input)
+        if find_owner(cell) == 'teacher':
+            cell.input = cipher.decrypt(cell.input)
         return nbc.ConverterNotebook.render_code(self, cell)
 
 if __name__ == "__main__":
