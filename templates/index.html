@@ -4,7 +4,8 @@
 </head>
 
 <body>
-<h1>List of Available Homeworks</h1>
+<h1>Welcome, {{ user.name }}!</h1>
+<h2>List of Available Homeworks</h2>
 <ul>
 {% for nb in nbs %}
   <p><a href='hw/{{ nb }}'>{{ nb }}</a></p>
