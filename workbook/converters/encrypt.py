@@ -1,4 +1,4 @@
-import sys
+import sys, json
 sys.path.append('/Users/jonathantaylor/nbconvert')
 
 import nbconvert as nbc
@@ -9,7 +9,7 @@ import base64
 from Crypto import Random
 from Crypto.Cipher import AES
 
-from set_owner import find_owner
+from owner import find_owner
 
 class Cipher(object):
     

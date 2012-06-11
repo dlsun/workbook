@@ -5,8 +5,8 @@ existing notebook.
 
 import copy, os, sys, shutil
 import glob
-from execute_and_save import execute_and_save
-from converters import set_owner, encrypt
+from .execute_and_save import execute_and_save
+from ..converters import owner, encrypt
 
 sys.path.append('/Users/jonathantaylor/nbconvert') # to find nbconvert
 import nbconvert as nb
@@ -34,6 +34,14 @@ def create_assignment(assignmentbase, header, student_nb):
     os.rename(newfile, outfile)
     return outfile
 
-if __name__ == "__main__":
 
-    create_assignment('../assignment1', '../headers/standard_header.ipynb', '../students/leland_stanford.ipynb')
+def main():
+    dd = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    print dd, 'path'
+    def p(*n): return os.path.join(dd, *n)
+                        
+    create_assignment(p('assignment1'), p('headers','standard_header.ipynb'), p('students','leland_stanford.ipynb'))
+
+if __name__ == "__main__":
+    main()
+

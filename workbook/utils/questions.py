@@ -2,8 +2,15 @@ import numpy as np
 from IPython.core.displaypub import publish_display_data
 import json
 
-def question(number):
-    publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question 2</h2>"})
+class HomeworkCounter(object):
+
+    def __init__(self):
+        self.question_number = 1
+
+    def next(self):
+        publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question %d</h2>" % self.question_number})
+        self.question_number += 1
+
 
 def multiple_choice(question_text, choices, correct_answer, identifier):
     """
@@ -41,7 +48,7 @@ def text_box(question_text, correct_answer, identifier):
                                                                   'checkable':False,
                                                                   'correct_answer':correct_answer}})
 
-def true_or_false(question_text, correct_answer, identifier):
+def true_false(question_text, correct_answer, identifier):
     """
     Generate a true or false question with given textname the input form identifier
     """

@@ -6,13 +6,14 @@ import nbconvert as nbc
 import base64
 
 def find_owner(cell):
-    for output in cell.outputs:
-        if 'json' in output:
-            try:
-                if 'owner' in output.json.keys():
-                    return output.json['owner']
-            except:
-                pass
+    if hasattr(cell, 'outputs'):
+        for output in cell.outputs:
+            if 'json' in output:
+                try:
+                    if 'owner' in output.json.keys():
+                        return output.json['owner']
+                except:
+                    pass
     return None
 
 class StudentOwner(nbc.ConverterNotebook):
@@ -37,7 +38,7 @@ class StudentOwner(nbc.ConverterNotebook):
 
     def render_markdown(self, cell):
         owner = find_owner(cell) or self.default_owner
-        if cell.input:
+        if cell.source:
             cell.owner = owner or self.default_owner
         else:
             cell.owner = self.default_owner
@@ -45,7 +46,7 @@ class StudentOwner(nbc.ConverterNotebook):
 
     def render_raw(self, cell):
         owner = find_owner(cell) or self.default_owner
-        if cell.input:
+        if cell.source:
             cell.owner = owner or self.default_owner
         else:
             cell.owner = self.default_owner

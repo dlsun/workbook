@@ -4,14 +4,17 @@ import os, shutil, glob, json
 from IPython.nbformat import current as nbformat
 
 # need to setup proper package structure
-import sys
-sys.path.append('/Users/jonathantaylor/workbook/utils/')
-from converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo
-from converters.set_owner import StudentOwner, RemoveOwner
-from converters import compose_converters
 
-PATH_TO_HW_FILES = '../notebooks/'
-PATH_TO_HW_TEMPLATES = '../hw_templates/'
+from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo
+from workbook.converters.owner import StudentOwner, RemoveOwner
+from workbook.converters import compose_converters
+
+from workbook.utils.homework_creator import create_assignment
+
+PATH_TO_HW_FILES = '/Users/jonathantaylor/workbook/notebooks/'
+PATH_TO_HW_TEMPLATES = '/Users/jonathantaylor/workbook/hw_templates/'
+PATH_TO_HEADERS = '/Users/jonathantaylor/workbook/headers/'
+PATH_TO_STUDENTS = '/Users/jonathantaylor/workbook/students/'
 
 app = Flask(__name__)
 
@@ -39,8 +42,11 @@ def index():
     if not os.path.exists(folder):
         os.makedirs(folder)
         # copy files from master directory to newly made folder
-        for hw_file in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'*.ipynb')):
-            shutil.copy(hw_file,folder)
+        for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):
+            outfile = create_assignment(hw_dir, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
+                                        os.path.join(PATH_TO_STUDENTS,user['id'] + '.ipynb'))
+            print 'outfile:', outfile
+            shutil.copy(outfile, folder)
     # get a list of all the notebooks in directory
     nbs = [ nb[:-6] for nb in os.listdir(folder) ] # strip .ipynb from filename
     return render_template('index.html',user = user,nbs=nbs)
@@ -75,7 +81,11 @@ def save_nb(nb):
     return request.data
 
 # start server
-if __name__ == '__main__':
+
+def main():
     app.run(debug=True,host='0.0.0.0')
     #app.run(debug=False,host='0.0.0.0')
+
+if __name__ == "__main__":
+    main()
 
