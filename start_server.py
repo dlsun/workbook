@@ -35,8 +35,11 @@ def index():
         for hw_file in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'*.ipynb')):
             shutil.copy(hw_file,folder)
     # get a list of all the notebooks in directory
-    nbs = [ nb[:-6] for nb in os.listdir(folder) ] # strip .ipynb from filename
-    return render_template('index.html',user = user,nbs=nbs)
+    nb_files = glob.glob(os.path.join(folder,'*.ipynb'))
+    nbs = [ nbformat.read(open(nb_file, 'rb'), 'json') for nb_file in nb_files ]
+    # strip folder from the filename
+    nb_files = [ os.path.split(path)[1] for path in nb_files ]
+    return render_template('index.html',user = user, nb_files=nb_files, nbs=nbs)
 
 # load the notebook page
 @app.route('/hw/<nb>')
