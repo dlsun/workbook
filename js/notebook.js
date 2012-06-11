@@ -1310,10 +1310,11 @@ var IPython = (function (IPython) {
             this.insert_cell_below('code');
         };
         this.dirty = false;
-        if (! this.read_only) {
+// don't start the kernel... -Dennis
+/*        if (! this.read_only) {
             this.start_kernel();
         }
-        this.select(0);
+*/        this.select(0);
         this.scroll_to_top();
         if (data.orig_nbformat !== undefined && data.nbformat !== data.orig_nbformat) {
             msg = "This notebook has been converted from an older " +

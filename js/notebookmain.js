@@ -48,7 +48,7 @@ $(document).ready(function () {
     IPython.layout_manager.do_resize();
     $([IPython.events]).on('notebook_loaded.Notebook', function () {
         IPython.layout_manager.do_resize();
-        IPython.save_widget.update_url();
+        //IPython.save_widget.update_url();  // don't update URL... -Dennis
     })
     IPython.notebook.load_notebook($('body').data('notebookId'));
 
