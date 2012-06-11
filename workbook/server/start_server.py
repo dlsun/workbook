@@ -19,6 +19,9 @@ PATH_TO_STUDENTS = '/Users/jonathantaylor/workbook/students/'
 
 app = Flask(__name__)
 
+def debug():
+    assert app.debug == False
+
 # checks whether user is logged in and returns user information
 def check_user(request):
     try:
@@ -27,7 +30,7 @@ def check_user(request):
         user_num = data[2]
         user_id = data[3][:-13]
     except KeyError:
-        user_name = 'Guest User'
+        user_name = 'Leland Stanford Jr.'
         user_num = '00000000'
         user_id = 'leland_stanford'
     user = {'name': user_name, 'num': user_num, 'id': user_id}
@@ -83,22 +86,28 @@ def save_nb(nbname):
     return request.data
 
 # load the JSON file of the notebook
-@app.route('/hw/<nbname>/check', methods=['GET'])
+@app.route('/hw/<nbname>/check', methods=['POST'])
 def check_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
+    import sys; sys.stdout.write(`request.form.keys()`)
     answers = {}
     for identifier, answer in request.args.items():
         output = find_identified_cell(nb, identifier)
         answers[identifier] = {'answer': answer, 'correct_answer': output.json.correct_answer}
-    return json.dumps(answers)
+    ovalue = ''
+    for v in dir(request):
+        if v[0] != '_':
+            ovalue += '\n%s:%s' % (str(v), json.dumps(str(getattr(request, v))))
+    file('dump.txt', 'w').write(ovalue)
+    return request.data
 
 # start server
 
 
 def main():
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0', use_reloader=False, use_debugger=True)
     #app.run(debug=False,host='0.0.0.0')
 
 if __name__ == "__main__":
