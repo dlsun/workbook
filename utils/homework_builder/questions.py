@@ -19,9 +19,9 @@ def multiple_choice(question_text, choices, correct_answer, identifier):
         raise ValueError('the correct answer should be one of the choices!')
 
     publish_display_data("HomeworkBuilder", {'text/html':radio_code})
-    publish_display_data("HomeworkBuilder", {'application/json': json.dumps({'question_identifier':identifier,
-                                                                             'checkable':True,
-                                                                             'correct_answer':correct_answer})})
+    publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
+                                                                  'checkable':True,
+                                                                  'correct_answer':correct_answer}})
 
 
 def text_box(question_text, correct_answer, identifier):
@@ -34,9 +34,9 @@ def text_box(question_text, correct_answer, identifier):
     ''' % {'name':identifier} 
 
     publish_display_data("HomeworkBuilder", {'text/html':textbox_code})
-    publish_display_data("HomeworkBuilder", {'application/json': json.dumps({'question_identifier':identifier,
-                                                                             'checkable':False,
-                                                                             'correct_answer':correct_answer})})
+    publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
+                                                                  'checkable':False,
+                                                                  'correct_answer':correct_answer}})
 
 def true_or_false(question_text, correct_answer, identifier):
     """
@@ -52,7 +52,7 @@ def true_or_false(question_text, correct_answer, identifier):
     if correct_answer not in [True, False]:
         raise ValueError('the correct answer should be one of [True, False]')
     publish_display_data("HomeworkBuilder", {'text/html':radio_code})
-    publish_display_data("HomeworkBuilder", {'application/json': json.dumps({'question_identifier':identifier,
-                                                                 'checkable':True,
-                                                                             'correct_answer':correct_answer})})
+    publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
+                                                                  'checkable':True,
+                                                                  'correct_answer':correct_answer}})
 

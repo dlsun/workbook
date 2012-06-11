@@ -79,10 +79,13 @@ class ConverterLaTeX(nb.ConverterLaTeX):
 
 if __name__ == '__main__':
     import shutil
-    outdir = '../hw_templates'
+    outdir = '../notebooks'
     assignment1 = 'assignment1.ipynb'
     create_assignment('assignment1', 'headers/standard_header.ipynb', 'students/leland_stanford.ipynb')
     execute_and_save('output/assignment1/leland_stanford.ipynb')
+    odir = os.path.join('..', 'notebooks', 'leland_stanford')
+    if not os.path.exists(odir):
+        os.makedirs(odir)
     shutil.copy('output/assignment1/leland_stanford_executed.ipynb',
-                '%s/leland_stanford.ipynb' % outdir)
+                os.path.join(odir, 'Assignment1.ipynb'))
     
