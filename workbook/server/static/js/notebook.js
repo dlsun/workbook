@@ -1272,27 +1272,31 @@ var IPython = (function (IPython) {
         $.ajax(url, settings);
     };
 
-
-    Notebook.prototype.check_notebook = function () {
-        // We may want to move the name/id/nbformat logic inside toJSON?
-        var data = this.toJSON();
-        data.metadata.name = this.notebook_name;
-        data.nbformat = this.nbformat;
-        // We do the call with settings so we can set cache to false.
-        var settings = {
-            processData : false,
-            cache : false,
-            type : "POST",
-            data : JSON.stringify(data),
-            headers : {'Content-Type': 'application/json'},
-	    contentType: 'application/json;charset=UTF-8', // added by Dennis
-            success : $.proxy(this.save_notebook_success,this),
-            error : $.proxy(this.save_notebook_error,this)
-        };
-        $([IPython.events]).trigger('notebook_saving.Notebook');
-        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
-	var url = '/hw/' + nb  + '/check'
-        $.ajax(url, settings);
+    Notebook.prototype.check_selected_cell = function (options) {
+	var that = this;
+        var cell = this.get_selected_cell();
+// 	if (cell.cell_type === 'teacher') {
+	    var cell_index = that.find_cell_index(cell);
+	    this.dirty = true;
+	output_div = cell.element.find("div.output");
+	
+	data = output_div.html(); // $("#notebook :input");  // output_div.html();
+	    // We do the call with settings so we can set cache to false.
+	    var settings = {
+		processData : false,
+		cache : false,
+		type : "POST",
+		data : JSON.stringify(document.forms),
+		headers : {'Content-Type': 'application/json'},
+		contentType: 'application/json;charset=UTF-8', // added by Dennis
+// 		success : $.proxy(this.save_notebook_success,this),
+// 		error : $.proxy(this.save_notebook_error,this)
+	    };
+	    var url = '/hw/' + nb  + '/check'
+		$.ajax(url, settings);
+// 	} else {
+// 	    alert(cell.input);
+//         }
     };
 
 

@@ -21,9 +21,9 @@ def multiple_choice(question_text, choices, correct_answer, identifier):
     # shuffle the choices
     np.random.shuffle(choices)
 
-    radio_code = '\n'.join(['''
-    <p><input type="radio" name="%(name)s" value="%(value)s"> %(value)s</p>
-    ''' % {'name':identifier, 'value':choice} for choice in choices])
+    radio_code = '<form>\n' + '\n'.join(['''
+    <p><input type="radio" name="%(name)s" value="%(value)s" id="%(id)d"> %(value)s</p>
+    ''' % {'name':identifier, 'value':choice, 'id':d} for d, choice in enumerate(choices)]) + '</form>\n'
 
     if correct_answer not in list(choices):
         raise ValueError('the correct answer should be one of the choices!')
@@ -40,7 +40,7 @@ def text_box(question_text, correct_answer, identifier):
     """
     publish_display_data("HomeworkBuilder", {'text/latex':question_text})
     textbox_code = '''
-    <p><input type="text" name="%(name)s"></p>
+    <form><p><input type="text" name="%(name)s"></p></form>
     ''' % {'name':identifier} 
 
     publish_display_data("HomeworkBuilder", {'text/html':textbox_code})
@@ -55,9 +55,9 @@ def true_false(question_text, correct_answer, identifier):
     publish_display_data("HomeworkBuilder", {'text/latex':"(True/False) " + question_text})
 
     choices = ['True', 'False']
-    radio_code = '\n'.join(['''
-    <p><input type="radio" name="%(name)s" value="%(value)s"> %(value)s</p>
-    ''' % {'name':identifier, 'value':choice} for choice in choices])
+    radio_code = '<form>\n' + '\n'.join(['''
+    <p><input type="radio" name="%(name)s" value="%(value)s" id="%(value)s"> %(value)s</p>
+    ''' % {'name':identifier, 'value':choice} for choice in choices]) + '</form>\n' 
 
     if correct_answer not in [True, False]:
         raise ValueError('the correct answer should be one of [True, False]')

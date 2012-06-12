@@ -906,7 +906,7 @@ var IPython = (function (IPython) {
     TeacherCell.prototype.toJSON = function () {
         var data = {};
         data.input = this.get_text();
-        data.cell_type = 'code';
+        data.cell_type = 'teacher';
         if (this.input_prompt_number) {
             data.prompt_number = this.input_prompt_number;
         };

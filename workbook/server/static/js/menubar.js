@@ -53,9 +53,6 @@ var IPython = (function (IPython) {
         this.element.find('#save_notebook').click(function () {
             IPython.notebook.save_notebook();
         });
-        this.element.find('#check_notebook').click(function () {
-            IPython.notebook.check_notebook();
-        });
         this.element.find('#download_ipynb').click(function () {
             var notebook_id = IPython.notebook.get_notebook_id();
             var url = $('body').data('baseProjectUrl') + 'notebooks/' +
@@ -120,6 +117,9 @@ var IPython = (function (IPython) {
         // Cell
         this.element.find('#run_cell').click(function () {
             IPython.notebook.execute_selected_cell();
+        });
+        this.element.find('#check_cell').click(function () {
+            IPython.notebook.check_selected_cell();
         });
         this.element.find('#run_cell_in_place').click(function () {
             IPython.notebook.execute_selected_cell({terminal:true});
