@@ -99,8 +99,8 @@ def check_nb(nbname):
     import sys; sys.stdout.write(`request.form.keys()`)
     answers = {}
     for identifier, answer in request.json:
-        output = find_identified_cell(nb, identifier)
-        answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer}
+        cell, output = find_identified_cell(nb, identifier)
+        answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer, 'constructor_info':output.json.constructor_info}
     file('dump.json', 'wb').write(json.dumps(answers))
     return request.data
 

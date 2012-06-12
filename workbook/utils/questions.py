@@ -12,68 +12,121 @@ class HomeworkCounter(object):
         self.question_number += 1
 
 
-def multiple_choice(question_text, choices, correct_answer, identifier, assignment_num=1):
-    """
-    Generate a multiple choice question with given text and choices, and name the input form identifier
-    """
-    publish_display_data("HomeworkBuilder", {'text/latex':question_text})
+class Question(object):
 
-    # shuffle the choices
-    np.random.shuffle(choices)
+    def publish(self):
+        raise NotImplementedError
 
-    d = {'identifier': identifier,
-         'url': 'assignment%d' % assignment_num}
+    @property
+    def constructor_info(self):
+        return None
 
-    radio_code = ('<form name="%(identifier)s" method="post" action="%(url)s/check">\n' % d) + '\n'.join(['''
-    <p><input type="radio" name=%(name)s value="%(value)s" id="%(value)s"> %(value)s</p>
-    ''' % {'name':identifier, 'value':choice, 'id':choice} for choice in choices]) + '</form>\n'
+class MultipleChoice(object):
 
-    if correct_answer not in list(choices):
-        raise ValueError('the correct answer should be one of the choices!')
+    def __init__(self, identifier, question_text, choices, correct_answer,
+                 assignment='assignment1', selected=None,
+                 shuffle=True):
 
-    publish_display_data("HomeworkBuilder", {'text/html':radio_code})
-    publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
-                                                                  'checkable':True,
-                                                                  'correct_answer':correct_answer}})
+        if correct_answer not in list(choices):
+            raise ValueError('the correct answer should be one of the choices!')
+        if selected and selected not in list(choices):
+            raise ValueError('selected answer should be one of the choices!')
 
-def text_box(question_text, correct_answer, identifier, assignment_num=1):
-    """
-    Generate a text box answer question with given textname the input form identifier
-    """
-    publish_display_data("HomeworkBuilder", {'text/latex':question_text})
+        if shuffle:
+            np.random.shuffle(choices)
+        self.shuffle = shuffle
+        self.choices = choices
+        self.selected = selected
+        self.question_text = question_text
+        self.correct_answer = correct_answer
+        self.assignment = assignment
+        self.identifier = identifier
 
-    d = {'identifier': identifier,
-         'url': 'assignment%d' % assignment_num}
+    @property
+    def constructor_info(self):
+        args = [self.identifier, self.question_text, self.choices, self.correct_answer]
+        kw = {'assignment':self.assignment,
+              'selected':self.selected,
+              'shuffle':self.shuffle}
+        return ('multiple_choice', args, kw)
 
-    textbox_code = '''
-    <form method="post" name=%(identifier)s action="%(url)s/check"><p><input type="text" ></p></form>
-    ''' % d
+    def publish(self):
 
-    publish_display_data("HomeworkBuilder", {'text/html':textbox_code})
-    publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
-                                                                  'checkable':False,
-                                                                  'correct_answer':correct_answer}})
+        publish_display_data("HomeworkBuilder", {'text/latex':self.question_text})
 
-def true_false(question_text, correct_answer, identifier, assignment_num=1):
-    """
-    Generate a true or false question with given textname the input form identifier
-    """
-    publish_display_data("HomeworkBuilder", {'text/latex':"(True/False) " + question_text})
+        d = {'identifier': self.identifier,
+             'url': self.assignment}
 
-    d = {'identifier': identifier,
-         'url': 'assignment%d' % assignment_num}
+        buttons = []
+        for choice in self.choices:
+            d['value'] = choice
+            if choice == self.selected and self.selected:
+                buttons.append("""<p><input type="radio" name=%(identifier)s value="%(value)s" id="%(value)s" checked="checked"> %(value)s</p>""" % d)
+            else:
+                buttons.append("""<p><input type="radio" name=%(identifier)s value="%(value)s" id="%(value)s"> %(value)s</p>""" % d)
+        radio_code = ('<form name="%(identifier)s" method="post" action="%(url)s/check">\n' % d) + '\n'.join(buttons) + '</form>\n'
 
-    choices = ['True', 'False']
-    radio_code = ('<form method="post" name=%(identifier)s action="%(url)s/check">\n' % d) + '\n'.join(['''
-    <p><input type="radio"  name=%(name)s value="%(value)s" id="%(value)s"> %(value)s</p>
-    ''' % {'name':identifier, 'value':choice, 'url':'assignment%d' % assignment_num} for choice in choices]) + '</form>\n' 
+        publish_display_data("HomeworkBuilder", {'text/html':radio_code})
+        publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':self.identifier,
+                                                                      'checkable':True,
+                                                                      'correct_answer':self.correct_answer,
+                                                                      'constructor_info':self.constructor_info}})
 
-    if correct_answer not in [True, False]:
-        raise ValueError('the correct answer should be one of [True, False]')
-    publish_display_data("HomeworkBuilder", {'text/html':radio_code})
-    publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
-                                                                  'checkable':True,
-                                                                  'correct_answer':correct_answer}})
+        publish_display_data("HomeworkBuilder", {'application/json': {'constructor_info':self.constructor_info}})
+
+class TrueFalse(MultipleChoice):
+
+    def __init__(self, identifier, question_text, correct_answer, 
+                 assignment='assignment1', selected=None):
+        self.tf_question_text = question_text
+        MultipleChoice.__init__(self, identifier, '(True/False) ' + question_text, [True, False],
+                                correct_answer, assignment=assignment,
+                                selected=selected,
+                                shuffle=False)
+
+    @property
+    def constructor_info(self):
+        args = [self.identifier, self.tf_question_text, self.correct_answer]
+        kw = {'assignment':self.assignment,
+                   'selected':self.selected}
+        return ('true_false', args, kw)
+
+class TextBox(MultipleChoice):
+
+    def __init__(self, identifier, question_text, correct_answer=None, 
+                 assignment='assignment1', selected=None):
+        self.identifier = identifier
+        self.question_text = question_text
+        self.correct_answer = correct_answer
+        self.assignment = assignment
+        self.selected = selected
+
+    @property
+    def constructor_info(self):
+        args = [self.identifier, self.question_text]
+        kw = {'correct_answer':self.correct_answer,
+              'assignment':self.assignment,
+              'selected':self.selected}
+        return ('textbox', args, kw)
+
+    def publish(self):
+        publish_display_data("HomeworkBuilder", {'text/latex':self.question_text})
+
+        d = {'identifier': self.identifier,
+             'url': self.assignment}
+
+        textbox_code = '''
+        <form method="post" name=%(identifier)s action="%(url)s/check"><p><input type="text" ></p></form>
+        ''' % d
+
+        publish_display_data("HomeworkBuilder", {'text/html':textbox_code})
+        publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':self.identifier,
+                                                                      'checkable':False,
+                                                                      'correct_answer':self.correct_answer,
+                                                                      'constructor_info':self.constructor_info}})
+        publish_display_data("HomeworkBuilder", {'application/json': {'constructor_info':self.constructor_info}})
+
+
 
 def is_identified_cell(cell, identifier):
     if hasattr(cell, 'outputs'):
@@ -93,6 +146,6 @@ def find_identified_cell(nb, identifier):
         for cell in ws.cells:
             check, value = is_identified_cell(cell, identifier)
             if check:
-                return value
-    return None
+                return cell, value
+    return None, None
 
