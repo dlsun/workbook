@@ -6,9 +6,8 @@ existing notebook.
 import copy, os, sys, shutil
 import glob
 from .execute_and_save import execute_and_save
-from workbook.converters import owner, encrypt, sync_metadata_name
-
-import workbook.external.nbconvert as nb
+from ..converters import owner, encrypt, sync_metadata_name
+from ..external import nbconvert as nb
 
 def merge_notebooks(outbase, *notebooks):
     if len(notebooks) == 0:

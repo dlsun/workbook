@@ -1,6 +1,6 @@
 import json
 
-import workbook.external.nbconvert as nbc
+from ..external import nbconvert as nbc
 import base64
 
 # pycrypto tools
