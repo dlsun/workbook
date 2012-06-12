@@ -18,7 +18,7 @@ from IPython.zmq.blockingkernelmanager import BlockingKernelManager
 from IPython.nbformat.current import reads, NotebookNode
 
 import sys, os
-from ..external.nbconvert import ConverterNotebook
+from workbook.external.nbconvert import ConverterNotebook
 
 def compare_png(a64, b64):
     """compare two b64 PNGs (incomplete)"""
