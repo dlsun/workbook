@@ -1272,21 +1272,15 @@ var IPython = (function (IPython) {
         $.ajax(url, settings);
     };
 
-    Notebook.prototype.check_selected_cell = function (options) {
+    Notebook.prototype.check_notebook = function () {
 	var that = this;
-        var cell = this.get_selected_cell();
-// 	if (cell.cell_type === 'teacher') {
-	    var cell_index = that.find_cell_index(cell);
-	    this.dirty = true;
-	output_div = cell.element.find("div.output");
-	
-	data = output_div.html(); // $("#notebook :input");  // output_div.html();
+	data = document.forms; 
 	    // We do the call with settings so we can set cache to false.
 	    var settings = {
 		processData : false,
 		cache : false,
 		type : "POST",
-		data : JSON.stringify(document.forms),
+		data : JSON.stringify(data),
 		headers : {'Content-Type': 'application/json'},
 		contentType: 'application/json;charset=UTF-8', // added by Dennis
 // 		success : $.proxy(this.save_notebook_success,this),
