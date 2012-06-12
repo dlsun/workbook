@@ -47,8 +47,7 @@ def index():
     # see if user has his own directory; if not, make one
     folder = os.path.join(PATH_TO_HW_FILES, user['id'])
     if not os.path.exists(folder):
-        StudentCreator(user['id'], user['name'])
-        stop
+        StudentCreator(user['id'], user['name']).render()
         os.makedirs(folder)
         # copy files from master directory to newly made folder
         for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):

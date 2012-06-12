@@ -20,8 +20,8 @@ class StudentCreator(nbc.ConverterNotebook):
     def render_code(self, cell):
         cell.input = cell.input.replace('LSJ', self.sunet_id)
         student_name = self.student_name or self.sunet_id
-        cell.input = cell.input.replace('Stanford, Leleand', student_name)
-        seed = randint(low=0,high=10**10)
+        cell.input = cell.input.replace('Stanford, Leland', student_name)
+        seed = randint(low=0,high=10**7)
         cell.input = cell.input.replace('1891', str(seed))
         return nbc.ConverterNotebook.render_code(self, cell)
 
