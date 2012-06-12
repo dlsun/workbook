@@ -11,8 +11,6 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('server')
     config.add_subpackage('converters')
 
-    config.add_data_dir(('workbook/static', 'workbook/server/static'))
-    config.add_data_dir(('workbook/templates', 'workbook/server/templates'))
     return config
 
 if __name__ == '__main__':
