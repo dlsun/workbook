@@ -2,16 +2,6 @@ import numpy as np
 from IPython.core.displaypub import publish_display_data
 import json
 
-submitform = ""
-
-
-submitform_js = """
-function submit%(identifier)s()
-{
-  document.%(identifier)s.submit();
-}
-"""
-
 class HomeworkCounter(object):
 
     def __init__(self):
@@ -31,11 +21,12 @@ def multiple_choice(question_text, choices, correct_answer, identifier, assignme
     # shuffle the choices
     np.random.shuffle(choices)
 
-    radio_code = ('<form name="multiple" method="post" action="%s/check">\n' % ('assignment%d' % assignment_num))  + '\n'.join(['''
-    <p><input type="radio" name="%(name)s" value="%(value)s" id="%(value)s"> %(value)s</p>
-    ''' % {'name':identifier, 'value':choice, 'id':d, 'url':'assignment%d' % assignment_num} for d, choice in enumerate(choices)]) + '</form>\n'
+    d = {'identifier': identifier,
+         'url': 'assignment%d' % assignment_num}
 
-    radio_code += submitform % {'identifier':identifier}
+    radio_code = ('<form name="%(identifier)s" method="post" action="%(url)s/check">\n' % d) + '\n'.join(['''
+    <p><input type="radio" name=%(name)s value="%(value)s" id="%(value)s"> %(value)s</p>
+    ''' % {'name':identifier, 'value':choice, 'id':choice} for choice in choices]) + '</form>\n'
 
     if correct_answer not in list(choices):
         raise ValueError('the correct answer should be one of the choices!')
@@ -44,24 +35,24 @@ def multiple_choice(question_text, choices, correct_answer, identifier, assignme
     publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
                                                                   'checkable':True,
                                                                   'correct_answer':correct_answer}})
-    publish_display_data("HomeworkBuilder", {'application/javascript': submitform_js % {'identifier':identifier}})
 
 def text_box(question_text, correct_answer, identifier, assignment_num=1):
     """
     Generate a text box answer question with given textname the input form identifier
     """
     publish_display_data("HomeworkBuilder", {'text/latex':question_text})
-    textbox_code = '''
-    <form method="post" action="%(url)s/check"><p><input type="text" name="%(name)s"></p></form>
-    ''' % {'name':identifier,'url':'assignment%d' % assignment_num} 
 
-    textbox_code += submitform % {'identifier':identifier}
+    d = {'identifier': identifier,
+         'url': 'assignment%d' % assignment_num}
+
+    textbox_code = '''
+    <form method="post" name=%(identifier)s action="%(url)s/check"><p><input type="text" ></p></form>
+    ''' % d
 
     publish_display_data("HomeworkBuilder", {'text/html':textbox_code})
     publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
                                                                   'checkable':False,
                                                                   'correct_answer':correct_answer}})
-    publish_display_data("HomeworkBuilder", {'application/javascript': submitform_js % {'identifier':identifier}})
 
 def true_false(question_text, correct_answer, identifier, assignment_num=1):
     """
@@ -69,20 +60,20 @@ def true_false(question_text, correct_answer, identifier, assignment_num=1):
     """
     publish_display_data("HomeworkBuilder", {'text/latex':"(True/False) " + question_text})
 
+    d = {'identifier': identifier,
+         'url': 'assignment%d' % assignment_num}
 
     choices = ['True', 'False']
-    radio_code = '<form method="post" action="%(url)s/check">\n' + '\n'.join(['''
-    <p><input type="radio" name="%(name)s" value="%(value)s" id="%(value)s"> %(value)s</p>
+    radio_code = ('<form method="post" name=%(identifier)s action="%(url)s/check">\n' % d) + '\n'.join(['''
+    <p><input type="radio"  name=%(name)s value="%(value)s" id="%(value)s"> %(value)s</p>
     ''' % {'name':identifier, 'value':choice, 'url':'assignment%d' % assignment_num} for choice in choices]) + '</form>\n' 
 
-    radio_code += submitform % {'identifier':identifier}
     if correct_answer not in [True, False]:
         raise ValueError('the correct answer should be one of [True, False]')
     publish_display_data("HomeworkBuilder", {'text/html':radio_code})
     publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':identifier,
                                                                   'checkable':True,
                                                                   'correct_answer':correct_answer}})
-    publish_display_data("HomeworkBuilder", {'application/javascript': submitform_js % {'identifier':identifier}})
 
 def is_identified_cell(cell, identifier):
     if hasattr(cell, 'outputs'):

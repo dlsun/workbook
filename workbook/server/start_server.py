@@ -98,14 +98,10 @@ def check_nb(nbname):
     nb = nbformat.read(open(filename, 'rb'), 'json')
     import sys; sys.stdout.write(`request.form.keys()`)
     answers = {}
-    for identifier, answer in request.args.items():
+    for identifier, answer in request.json:
         output = find_identified_cell(nb, identifier)
-        answers[identifier] = {'answer': answer, 'correct_answer': output.json.correct_answer}
-    ovalue = ''
-    for v in dir(request):
-        if v[0] != '_':
-            ovalue += '\n%s:%s' % (str(v), json.dumps(str(getattr(request, v))))
-    file('dump.txt', 'w').write(ovalue)
+        answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer}
+    file('dump.json', 'wb').write(json.dumps(answers))
     return request.data
 
 # start server

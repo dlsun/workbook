@@ -14,6 +14,10 @@ $(document).ready(function () {
 
     IPython.init_mathjax();
 
+    $('input').live('change', function() {
+	this.form.value = this.value;
+    });
+
     IPython.read_only = $('body').data('readOnly') === 'True';
     $('div#main_app').addClass('border-box-sizing ui-widget');
     $('div#notebook_panel').addClass('border-box-sizing ui-widget');
