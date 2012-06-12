@@ -1,8 +1,6 @@
 import json
-import sys
-sys.path.append('/Users/jonathantaylor/nbconvert')
 
-import nbconvert as nbc
+import ..external.nbconvert as nbc
 import base64
 
 def find_owner(cell):

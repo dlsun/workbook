@@ -8,8 +8,7 @@ import glob
 from .execute_and_save import execute_and_save
 from ..converters import owner, encrypt, sync_metadata_name
 
-sys.path.append('/Users/jonathantaylor/nbconvert') # to find nbconvert
-import nbconvert as nb
+import ..external.nbconvert as nb
 
 def merge_notebooks(outbase, *notebooks):
     if len(notebooks) == 0:

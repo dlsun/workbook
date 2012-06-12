@@ -12,10 +12,12 @@ from workbook.converters import compose_converters
 from workbook.utils.homework_creator import create_assignment
 from workbook.utils.questions import find_identified_cell
 
-PATH_TO_HW_FILES = '/Users/jonathantaylor/workbook/notebooks/'
-PATH_TO_HW_TEMPLATES = '/Users/jonathantaylor/workbook/hw_templates/'
-PATH_TO_HEADERS = '/Users/jonathantaylor/workbook/headers/'
-PATH_TO_STUDENTS = '/Users/jonathantaylor/workbook/students/'
+datadir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+PATH_TO_HW_FILES = os.path.join(datadir, 'notebooks')
+PATH_TO_HW_TEMPLATES = os.path.join(datadir, 'hw_templates')
+PATH_TO_HEADERS = os.path.join(datadir, 'headers')
+PATH_TO_STUDENTS = os.path.join(datadir, 'students')
 
 app = Flask(__name__)
 
