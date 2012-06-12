@@ -62,6 +62,7 @@ var IPython = (function (IPython) {
 
 
     Notebook.prototype.bind_events = function () {
+
         var that = this;
         $(document).keydown(function (event) {
             // console.log(event);
@@ -1288,9 +1289,31 @@ var IPython = (function (IPython) {
 	    };
 	    var url = '/hw/' + nb  + '/check'
 		$.ajax(url, settings);
-// 	} else {
-// 	    alert(cell.input);
-//         }
+    };
+
+    Notebook.prototype.check_selected_cell = function () {
+        var that = this;
+        var cell = that.get_selected_cell();
+	output_div = cell.element.find('div.output');
+	found_forms = output_div.find('form'); //getElementsByTagName('form');
+	forms = [];
+	for (i=0; i < found_forms.length; i++) {
+            forms[i] = found_forms[i]
+        }
+	data = forms[0];
+	    // We do the call with settings so we can set cache to false.
+	    var settings = {
+		processData : false,
+		cache : false,
+		type : "POST",
+		data : JSON.stringify(data),
+		headers : {'Content-Type': 'application/json'},
+		contentType: 'application/json;charset=UTF-8', // added by Dennis
+// 		success : $.proxy(this.save_notebook_success,this),
+// 		error : $.proxy(this.save_notebook_error,this)
+	    };
+	    var url = '/hw/' + nb  + '/check'
+		$.ajax(url, settings);
     };
 
 
