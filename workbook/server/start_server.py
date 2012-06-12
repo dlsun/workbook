@@ -84,13 +84,14 @@ def save_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
+    nbformat.write(nb, file('dump.ipynb', 'wb'), 'json')
     nb = compose_converters(nb, RemoveOwner, DecryptTeacherInfo)
     nb.metadata.name = nbname
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
 
 # load the JSON file of the notebook
-@app.route('/hw/<nbname>/check', methods=['POST'])
+@app.route('/hw/<nbname>/check', methods=['GET', 'POST'])
 def check_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
