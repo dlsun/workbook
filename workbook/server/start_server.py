@@ -7,6 +7,7 @@ from IPython.nbformat import current as nbformat
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo
 from workbook.converters.owner import StudentOwner, RemoveOwner
+from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters
 
 from workbook.utils.homework_creator import create_assignment
@@ -32,9 +33,9 @@ def check_user(request):
         user_num = data[2]
         user_id = data[3][:-13]
     except KeyError:
-        user_name = 'Leland Stanford Jr.'
+        user_name = 'Testing student'
         user_num = '00000000'
-        user_id = 'leland_stanford'
+        user_id = 'testing'
     user = {'name': user_name, 'num': user_num, 'id': user_id}
     return user
 
@@ -46,6 +47,8 @@ def index():
     # see if user has his own directory; if not, make one
     folder = os.path.join(PATH_TO_HW_FILES, user['id'])
     if not os.path.exists(folder):
+        StudentCreator(user['id'], user['name'])
+        stop
         os.makedirs(folder)
         # copy files from master directory to newly made folder
         for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):
@@ -106,7 +109,6 @@ def check_nb(nbname):
     return request.data
 
 # start server
-
 
 def main():
     app.run(debug=True,host='0.0.0.0', use_reloader=False, use_debugger=True)

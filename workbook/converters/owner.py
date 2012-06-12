@@ -77,8 +77,8 @@ class RemoveOwner(nbc.ConverterNotebook):
 
 if __name__ == "__main__":
 
-    student = StudentOwner('../notebooks/leland_stanford/Assignment1.ipynb', 'student')
+    student = StudentOwner('../../notebooks/leland_stanford/Assignment1.ipynb', 'student')
     student.render()
-    ta = TAOwner('../notebooks/leland_stanford/Assignment1.ipynb', 'ta')
+    ta = TAOwner('../../notebooks/leland_stanford/Assignment1.ipynb', 'ta')
     ta.render()
 
