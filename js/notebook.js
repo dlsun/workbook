@@ -1275,7 +1275,12 @@ var IPython = (function (IPython) {
 
     Notebook.prototype.check_notebook = function () {
 	var that = this;
-	data = document.forms; 
+	found_forms = document.forms; 
+	forms = [];
+	for (i=0; i < found_forms.length; i++) {
+            forms[i] = [found_forms[i].name, found_forms[i].value];
+        }
+	data = forms;
 	    // We do the call with settings so we can set cache to false.
 	    var settings = {
 		processData : false,
@@ -1298,9 +1303,9 @@ var IPython = (function (IPython) {
 	found_forms = output_div.find('form'); //getElementsByTagName('form');
 	forms = [];
 	for (i=0; i < found_forms.length; i++) {
-            forms[i] = found_forms[i]
+            forms[i] = [found_forms[i].name, found_forms[i].value];
         }
-	data = forms[0];
+	data = forms;
 	    // We do the call with settings so we can set cache to false.
 	    var settings = {
 		processData : false,
