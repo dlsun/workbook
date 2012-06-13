@@ -96,9 +96,9 @@ class MultipleChoice(object):
     def check_answer(self, answer):
         self.answer = answer
         data = self.publish(return_data=True)
-        if self.selected == self.correct_answer:
+        if self.answer == self.correct_answer:
             data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
-        else:
+        elif self.answer:
             data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
         return data
 
@@ -197,7 +197,7 @@ class TextBox(MultipleChoice):
         data = self.publish(return_data=True)
         if self.answer == self.correct_answer:
             data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
-        else:
+        elif self.answer:
             data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
         return data
 
