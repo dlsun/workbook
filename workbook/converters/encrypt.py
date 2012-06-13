@@ -11,6 +11,7 @@ KEY_SIZE = 16
 AES.block_size = BLOCK_SIZE
 
 from owner import find_owner
+from metadata import find_metadata
 
 class Cipher(object):
     
@@ -41,7 +42,8 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        if find_owner(cell) == 'teacher':
+        if find_metadata(cell)['owner'] == 'teacher':
+        #if find_owner(cell) == 'teacher':
             cell.input = self.cipher.encrypt(cell.input)
             for output in cell.outputs:
                 if hasattr(output, "json") and 'owner' not in output.json.keys():
@@ -57,7 +59,8 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        if find_owner(cell) == 'teacher':
+        #if find_owner(cell) == 'teacher':
+        if find_metadata(cell)['owner'] == 'teacher':
             cell.input = self.cipher.decrypt(cell.input)
             for output in cell.outputs:
                 if hasattr(output, "json") and 'owner' not in output.json.keys():

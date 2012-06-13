@@ -7,6 +7,7 @@ from IPython.nbformat import current as nbformat
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.owner import StudentOwner, RemoveOwner
+from workbook.converters.metadata import StudentMetadata, RemoveMetadata
 from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
 
@@ -23,6 +24,8 @@ PATH_TO_HW_FILES = os.path.join(datadir, 'notebooks')
 PATH_TO_HW_TEMPLATES = os.path.join(datadir, 'hw_templates')
 PATH_TO_HEADERS = os.path.join(datadir, 'headers')
 PATH_TO_STUDENTS = os.path.join(datadir, 'students')
+
+counter = 0
 
 app = Flask(__name__)
 
@@ -100,6 +103,7 @@ def hw(nb):
 # load the JSON file of the notebook
 @app.route('/hw/<nbname>/load', methods=['GET'])
 def load_nb(nbname):
+    global counter
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
@@ -107,16 +111,18 @@ def load_nb(nbname):
     # filenames of converters will be adjusted by  compose_converters
 
     encrypt = EncryptTeacherInfo(filename, 'encrypt', user['cipher']) 
-    student = StudentOwner(filename, 'student')
+    student = StudentMetadata(filename, 'student')
     
-    nb = compose_converters(nb, encrypt, student)
+    # composition is right to left
+    nb = compose_converters(nb, student, encrypt)
     nb.metadata.name = nbname
-    nbformat.write(nb, file('test.ipynb','wb'), 'json')
+
     return json.dumps(nb)
 
 # save the JSON file of the notebook
 @app.route('/hw/<nbname>/save', methods=['PUT'])
 def save_nb(nbname):
+    global counter
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
@@ -124,9 +130,10 @@ def save_nb(nbname):
     # filenames of converters will be adjusted by  compose_converters
 
     decrypt = EncryptTeacherInfo(filename, 'decrypt', user['cipher']) 
-    rmstudent = RemoveOwner(filename, 'studentrm')
+    rmstudent = RemoveMetadata(filename, 'studentrm')
     
-    nb = compose_converters(nb, rmstudent, decrypt)
+    # composition is right to left
+    nb = compose_converters(nb, decrypt, rmstudent)
     nb.metadata.name = nbname
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
@@ -134,6 +141,7 @@ def save_nb(nbname):
 # load the JSON file of the notebook
 @app.route('/hw/<nbname>/check', methods=['GET', 'POST'])
 def check_nb(nbname):
+    global counter
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     tmpf = os.path.splitext(filename)[0] + '_tmp'
