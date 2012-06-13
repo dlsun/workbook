@@ -3,31 +3,51 @@ This module gives an example of inserting a worksheet into an
 existing notebook.
 """
 
-import copy, os, sys, shutil
+import copy, os, sys, shutil, json
 import glob
 from .execute_and_save import execute_and_save
 from ..converters import owner, encrypt, sync_metadata_name, AddMetadata
-from ..external import nbconvert as nb
+from ..external import nbconvert as nbc
 
 def merge_notebooks(outbase, *notebooks):
     if len(notebooks) == 0:
         raise ValueError('no notebooks to merge!')
-    converter = nb.ConverterNotebook(notebooks[0], outbase)
+    converter = nbc.ConverterNotebook(notebooks[0], outbase)
     converter.read()
     for notebook in notebooks[1:]:
-        notebook_reader = nb.Converter(notebook)
+        notebook_reader = nbc.Converter(notebook)
         notebook_reader.read()
 
         converter.nb.worksheets += notebook_reader.nb.worksheets
     return converter.render()
 
-def create_assignment(assignmentfile, header, student_nb):
+def create_assignment(assignmentfile, student_info):
     assignmentbase = os.path.splitext(assignmentfile)[0]
-    student_id = os.path.splitext(os.path.split(student_nb)[1])[0]
+    student_info = json.load(file(student_info, 'rb'))
+    student_id = student_info['id']
+
+    # make output directory
+
     odir = os.path.join('..', 'notebooks', student_id)
     if not os.path.exists(odir):
         os.makedirs(odir)
-    outfile = merge_notebooks(os.path.join(odir, os.path.split(assignmentbase)[1]), student_nb, header, assignmentfile)
+
+    outfile = os.path.join(odir, os.path.split(assignmentfile)[1])
+    shutil.copy(assignmentfile, outfile)
+
+    # inject the seed as the first line of the first code cell
+    # should be a neater way to do this
+    nb = nbc.nbformat.read(open(outfile, 'rb'), 'json')
+    inserted_seed = False
+    for ws in nb.worksheets:
+        if not inserted_seed:
+            for cell in ws.cells:
+                if cell.cell_type == 'code':
+                    cell.input = 'seed=%d\n' % student_info['seed'] + cell.input
+                    inserted_seed = True
+                    break
+
+    nbc.nbformat.write(nb, open(outfile, 'wb'), 'json')
     newfile = execute_and_save(outfile)
     os.rename(newfile, outfile)
     converter = AddMetadata(outfile, os.path.splitext(outfile)[0] + '_tmp',
@@ -39,13 +59,4 @@ def create_assignment(assignmentfile, header, student_nb):
     return outfile
 
 
-def main():
-    dd = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    print dd, 'path'
-    def p(*n): return os.path.join(dd, *n)
-                        
-    create_assignment(p('assignment1'), p('headers','standard_header.ipynb'), p('students','leland_stanford.ipynb'))
-
-if __name__ == "__main__":
-    main()
 

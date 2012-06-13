@@ -3,7 +3,7 @@ import os, shutil, glob, json, tempfile
 
 from IPython.nbformat import current as nbformat
 
-# need to setup proper package structure
+
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata, 
@@ -79,18 +79,20 @@ def generate_student(user, folder):
             ''.join([unichr(random.choice((0x300, 0x2000))
                             +random.randint(0,0xff)) for _ in range(BLOCK_SIZE)]), 'utf-8'))[:BLOCK_SIZE]
 
-    open(os.path.join(folder, 'encryption.json'), 'wb').write(json.dumps({'key':key,
-                                                             'iv':iv}))
+    open(os.path.join(folder, 'student_info.json'), 'wb').write(json.dumps({'key':key,
+                                                                            'iv':iv,
+                                                                            'name':user['name'],
+                                                                            'id':user['id'],
+                                                                            'seed':random.randint(0,1000000)}))
 
     # copy files from master directory to newly made folder
     for hwfile in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*pynb')):
-        outfile = create_assignment(hwfile, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
-                                    os.path.join(PATH_TO_STUDENTS,user['id'] + '.ipynb'))
+        outfile = create_assignment(hwfile, os.path.join(folder, 'student_info.json'))
         shutil.copy(outfile, folder)
 
 def set_student_cipher(user, folder):
 
-    d = json.load(open(os.path.join(folder, 'encryption.json'), 'rb'))
+    d = json.load(open(os.path.join(folder, 'student_info.json'), 'rb'))
     key = d['key']
     iv = d['iv']
     user['cipher'] = Cipher(key, iv)
