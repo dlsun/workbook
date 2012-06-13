@@ -6,12 +6,14 @@ from IPython.nbformat import current as nbformat
 # need to setup proper package structure
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
-from workbook.converters.metadata import StudentMetadata, RemoveMetadata
+from workbook.converters.metadata import (StudentMetadata, RemoveMetadata, 
+                                          find_metadata)
 from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
 
 from workbook.utils.homework_creator import create_assignment
 from workbook.utils.questions import find_identified_cell, construct_question
+
 
 # for constructing the encryption key, iv
 
@@ -161,10 +163,12 @@ def check_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     tmpf = os.path.splitext(filename)[0] + '_tmp'
+    answers = {}
     converter = ConverterNotebook(filename, tmpf)
     converter.read()
-    answers = {}
+
     for identifier, answer in request.json:
+
         cell, output = find_identified_cell(converter.nb, identifier)
         answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer, 'constructor_info':output.json.constructor_info}
         name, args, kw = output.json.constructor_info
@@ -174,8 +178,12 @@ def check_nb(nbname):
         output.json = data['application/json'] # json.dumps(data['application/json'])
         output.latex = data['text/latex'].split('\n')
         output.html = data['text/html'].split('\n')
+        import sys
+        sys.stderr.write('cell.metadata: ' + `find_metadata(cell)` + '\n')
+
     ofile = converter.render()
     os.rename(ofile, filename)
+
     nb = nbformat.read(open(filename, 'rb'), 'json')
     nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)

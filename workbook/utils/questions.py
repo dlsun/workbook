@@ -210,7 +210,6 @@ def is_identified_cell(cell, identifier):
             if 'json' in output:
                 try:
                     if 'question_identifier' in output.json.keys():
-                        print 'question_identifier', output.json['question_identifier']
                         if output.json['question_identifier'] == identifier:
                             return True, output
                 except AttributeError:
