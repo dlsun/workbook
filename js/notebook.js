@@ -1289,11 +1289,25 @@ var IPython = (function (IPython) {
 		data : JSON.stringify(data),
 		headers : {'Content-Type': 'application/json'},
 		contentType: 'application/json;charset=UTF-8', // added by Dennis
- 		success : $.proxy(this.save_notebook_success,this),
- 		error : $.proxy(this.save_notebook_error,this)
+//  		success : $.proxy(this.load_notebook_success,this),
+//  		error : $.proxy(this.load_notebook_error,this)
 	    };
 	    var url = '/hw/' + nb  + '/check'
 		$.ajax(url, settings);
+
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "GET",
+            dataType : "json",
+            success : $.proxy(this.load_notebook_success,this),
+            error : $.proxy(this.load_notebook_error,this),
+        };
+        $([IPython.events]).trigger('notebook_loading.Notebook');
+        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
+	var url = '/hw/' + nb  + '/load'
+        $.ajax(url, settings);
+
     };
 
     Notebook.prototype.check_selected_cell = function () {
@@ -1314,11 +1328,26 @@ var IPython = (function (IPython) {
 		data : JSON.stringify(data),
 		headers : {'Content-Type': 'application/json'},
 		contentType: 'application/json;charset=UTF-8', // added by Dennis
- 		success : $.proxy(this.save_notebook_success,this),
- 		error : $.proxy(this.save_notebook_error,this)
+ 		success : $.proxy(this.load_notebook_success,this),
+ 		error : $.proxy(this.load_notebook_error,this)
 	    };
 	    var url = '/hw/' + nb  + '/check'
 		$.ajax(url, settings);
+
+
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "GET",
+            dataType : "json",
+            success : $.proxy(this.load_notebook_success,this),
+            error : $.proxy(this.load_notebook_error,this),
+        };
+        $([IPython.events]).trigger('notebook_loading.Notebook');
+        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
+	var url = '/hw/' + nb  + '/load'
+        $.ajax(url, settings);
+
     };
 
 
