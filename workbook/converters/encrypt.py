@@ -41,7 +41,8 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        if find_metadata(cell)['owner'] == 'teacher':
+        output = find_metadata(cell)
+        if output is not None and output.json['workbook_metadata']['owner'] == 'teacher':
             cell.input = self.cipher.encrypt(cell.input)
             for output in cell.outputs:
                 # don't encrypt the metadata
@@ -63,7 +64,8 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        if find_metadata(cell)['owner'] == 'teacher':
+        output = find_metadata(cell)
+        if output.json['workbook_metadata']['owner'] == 'teacher':
             cell.input = self.cipher.decrypt(cell.input)
             for output in cell.outputs:
                 # don't encrypt the metadata
