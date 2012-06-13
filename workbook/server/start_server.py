@@ -83,8 +83,8 @@ def generate_student(user, folder):
                                                              'iv':iv}))
 
     # copy files from master directory to newly made folder
-    for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):
-        outfile = create_assignment(hw_dir, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
+    for hwfile in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*pynb')):
+        outfile = create_assignment(hwfile, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
                                     os.path.join(PATH_TO_STUDENTS,user['id'] + '.ipynb'))
         shutil.copy(outfile, folder)
 

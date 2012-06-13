@@ -21,13 +21,13 @@ def merge_notebooks(outbase, *notebooks):
         converter.nb.worksheets += notebook_reader.nb.worksheets
     return converter.render()
 
-def create_assignment(assignmentbase, header, student_nb):
+def create_assignment(assignmentfile, header, student_nb):
+    assignmentbase = os.path.splitext(assignmentfile)[0]
     student_id = os.path.splitext(os.path.split(student_nb)[1])[0]
     odir = os.path.join('..', 'notebooks', student_id)
     if not os.path.exists(odir):
         os.makedirs(odir)
-    questions = sorted(glob.glob(os.path.join(assignmentbase, 'q*.ipynb')))
-    outfile = merge_notebooks(os.path.join(odir, os.path.split(assignmentbase)[1]), student_nb, header, *questions)
+    outfile = merge_notebooks(os.path.join(odir, os.path.split(assignmentbase)[1]), student_nb, header, assignmentfile)
     newfile = execute_and_save(outfile)
     os.rename(newfile, outfile)
     converter = AddMetadata(outfile, os.path.splitext(outfile)[0] + '_tmp',
