@@ -31,8 +31,8 @@ def create_assignment(assignmentfile, header, student_nb):
     newfile = execute_and_save(outfile)
     os.rename(newfile, outfile)
     converter = AddMetadata(outfile, os.path.splitext(outfile)[0] + '_tmp',
-                            {'workbook_metadata':{'owner':'teacher',
-                                                  'color':'blue'}})
+                            {'owner':'teacher',
+                             'color':'blue'})
     newfile = converter.render()
     os.rename(newfile, outfile)
     sync_metadata_name(outfile)

@@ -12,6 +12,12 @@ class HomeworkCounter(object):
         publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question %d</h2>" % self.question_number})
 
 
+def publish_workbook_metadata(metadata):
+    publish_display_data("HomeworkBuilder", 
+                         {"application/json":{"workbook_metadata":
+                                                  metadata}})
+
+
 class Question(object):
 
     def publish(self, return_data=False):

@@ -7,7 +7,7 @@ from IPython.nbformat import current as nbformat
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata, 
-                                          find_metadata)
+                                          find_and_merge_metadata)
 from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
 
@@ -179,7 +179,7 @@ def check_nb(nbname):
         output.latex = data['text/latex'].split('\n')
         output.html = data['text/html'].split('\n')
         import sys
-        sys.stderr.write('cell.metadata: ' + `find_metadata(cell)` + '\n')
+        sys.stderr.write('cell.metadata: ' + `find_and_merge_metadata(cell)` + '\n')
 
     ofile = converter.render()
     os.rename(ofile, filename)

@@ -1,4 +1,3 @@
-# Following example on http://ipython.org/ipython-doc/dev/interactive/reference.html#magic-command-system
 
 import sys
 import tempfile
@@ -28,6 +27,10 @@ import rpy2.rinterface as ri
 import rpy2.robjects as ro
 from rpy2.robjects.numpy2ri import numpy2ri
 ro.conversion.py2ri = numpy2ri
+
+# Local imports
+
+from .questions import publish_workbook_metadata
 
 @magics_class
 class HomeworkMagics(RMagics):
@@ -69,6 +72,19 @@ class HomeworkMagics(RMagics):
             publish_display_data('HomeworkMagics', {mime:data})
 
     @magic_arguments()
+    @argument(
+        'name_of_dict', 
+        type=str,
+        )
+    @line_magic
+    def metadata(self, line):
+        """
+        Publish elements of a dictionary into workbook_metadata of the current cell
+        """
+        args = parse_argstring(self.metadata, line)
+        metadata = self.shell.user_ns[args.name_of_dict]
+        publish_workbook_metadata(metadata)
+
     @argument(
         'number', 
         type=int

@@ -5,7 +5,11 @@ import base64
 
 from IPython.nbformat.current import NotebookNode
 
-def find_metadata(cell):
+def find_and_merge_metadata(cell):
+    """
+    Find all workbook_metadata in a cell, merge it into one output
+    and return that output
+    """
     results = []
     if hasattr(cell, 'outputs'):
         for output in cell.outputs:
@@ -16,8 +20,15 @@ def find_metadata(cell):
                 except:
                     pass
     if results:
-        return results[-1] # the last one -- but we really should 
-                           # collect it all
+        merged_metadata = {}
+        for output in results:
+            cell.outputs.remove(output)
+            for key, value in output.json['workbook_metadata'].items():
+                merged_metadata[key] = value
+        merged_output = NotebookNode(output_type='display_data')
+        merged_output.json = {'workbook_metadata':merged_metadata}
+        cell.outputs.append(merged_output)
+        return merged_output
 
 class AddMetadata(nbc.ConverterNotebook):
     """
@@ -28,13 +39,13 @@ class AddMetadata(nbc.ConverterNotebook):
         nbc.ConverterNotebook.__init__(self, infile, outbase)
         self.metadata = metadata
         self.output = NotebookNode(output_type='display_data')
-        self.output.json = metadata
+        self.output.json = {'workbook_metadata': metadata}
 
     def render_code(self, cell):
         """Convert a code cell
 
         Returns list."""
-        output = find_metadata(cell)
+        output = find_and_merge_metadata(cell)
         if output is None:
             cell.outputs.append(self.output)
         else:
@@ -49,28 +60,28 @@ class StudentMetadata(nbc.ConverterNotebook):
     default_output.json = {'workbook_metadata':{'owner':'student'}}
 
     def render_heading(self, cell):
-        output = find_metadata(cell) or self.default_output
+        output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
             setattr(cell, key, value)
         return nbc.ConverterNotebook.render_heading(self, cell)
 
     def render_code(self, cell):
-        output = find_metadata(cell) or self.default_output
+        output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
             setattr(cell, key, value)
         return nbc.ConverterNotebook.render_code(self, cell)
 
     def render_markdown(self, cell):
-        output = find_metadata(cell) or self.default_output
+        output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
             setattr(cell, key, value)
         return nbc.ConverterNotebook.render_markdown(self, cell)
 
     def render_raw(self, cell):
-        output = find_metadata(cell) or self.default_output
+        output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
             setattr(cell, key, value)
@@ -83,7 +94,7 @@ class TAMetadata(StudentMetadata):
 class RemoveMetadata(nbc.ConverterNotebook):
 
     def render_heading(self, cell):
-        output = find_metadata(cell)
+        output = find_and_merge_metadata(cell)
         if output:
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
@@ -94,7 +105,7 @@ class RemoveMetadata(nbc.ConverterNotebook):
         return nbc.ConverterNotebook.render_heading(self, cell)
 
     def render_code(self, cell):
-        output = find_metadata(cell)
+        output = find_and_merge_metadata(cell)
         if output: 
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
@@ -105,7 +116,7 @@ class RemoveMetadata(nbc.ConverterNotebook):
         return nbc.ConverterNotebook.render_code(self, cell)
 
     def render_markdown(self, cell):
-        output = find_metadata(cell)
+        output = find_and_merge_metadata(cell)
         if output:
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
@@ -116,7 +127,7 @@ class RemoveMetadata(nbc.ConverterNotebook):
         return nbc.ConverterNotebook.render_markdown(self, cell)
 
     def render_raw(self, cell):
-        output = find_metadata(cell)
+        output = find_and_merge_metadata(cell)
         if output: 
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():

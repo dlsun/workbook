@@ -10,7 +10,7 @@ BLOCK_SIZE = 16
 KEY_SIZE = 16
 AES.block_size = BLOCK_SIZE
 
-from metadata import find_metadata
+from metadata import find_and_merge_metadata
 
 class Cipher(object):
     
@@ -41,8 +41,10 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        output = find_metadata(cell)
-        if output is not None and output.json['workbook_metadata']['owner'] == 'teacher':
+        output = find_and_merge_metadata(cell)
+        if (output is not None and 
+            'owner' in output.json['workbook_metadata'].keys() 
+            and output.json['workbook_metadata']['owner'] == 'teacher'):
             cell.input = self.cipher.encrypt(cell.input)
             for output in cell.outputs:
                 # don't encrypt the metadata
@@ -64,8 +66,10 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        output = find_metadata(cell)
-        if output.json['workbook_metadata']['owner'] == 'teacher':
+        output = find_and_merge_metadata(cell)
+        if (output is not None and 
+            'owner' in output.json['workbook_metadata'].keys()
+            and output.json['workbook_metadata']['owner'] == 'teacher'):
             cell.input = self.cipher.decrypt(cell.input)
             for output in cell.outputs:
                 # don't encrypt the metadata
