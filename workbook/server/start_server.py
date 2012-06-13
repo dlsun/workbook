@@ -177,6 +177,7 @@ def check_nb(nbname):
     ofile = converter.render()
     os.rename(ofile, filename)
     nb = nbformat.read(open(filename, 'rb'), 'json')
+    nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)
 
 # start server
