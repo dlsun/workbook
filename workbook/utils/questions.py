@@ -49,9 +49,9 @@ class MultipleChoice(object):
                  assignment='assignment1', selected=None):
 
         if correct_answer not in list(choices):
-            raise ValueError('the correct answer should be one of the choices!')
+            raise ValueError('the correct answer should be one of the choices! %s' % `(correct_answer, choices)`)
         if selected and selected not in list(choices):
-            raise ValueError('selected answer should be one of the choices!')
+            raise ValueError('selected answer should be one of the choices! %s' % `(selected, choices)`)
 
         self.choices = choices
         self.selected = selected
@@ -121,22 +121,10 @@ class TrueFalse(MultipleChoice):
 
     checkable = True
 
-#     def get_answer(self):
-#         return self.selected
-
-#     def set_answer(self, answer):
-#         if answer and str(answer) not in ['True', 'False']:
-#             # will this get raised?
-#             raise ValueError('answer should be in choices! %s' % `(answer, self.choices)`)
-#         self.selected = answer
-
-#     answer = property(get_answer, set_answer)
-
     def __init__(self, identifier, question_text, correct_answer, 
                  assignment='assignment1', selected=None):
-        # self.tf_question_text = question_text
         MultipleChoice.__init__(self, identifier, question_text, ['True', 'False'],
-                                correct_answer, assignment=assignment,
+                                str(correct_answer), assignment=assignment,
                                 selected=selected)
 
     @property

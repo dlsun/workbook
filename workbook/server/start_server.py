@@ -175,11 +175,14 @@ def check_nb(nbname):
         answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer, 'constructor_info':output.json.constructor_info}
         name, args, kw = output.json.constructor_info
         question = construct_question(name, args, kw)
-        data = question.check_answer(answer)
-        # would be nice to automatically have this done
-        output.json = data['application/json'] # json.dumps(data['application/json'])
-        output.latex = data['text/latex'].split('\n')
-        output.html = data['text/html'].split('\n')
+        if question.checkable:
+            data = question.check_answer(answer)
+            # would be nice to automatically have this done
+            output.json = data['application/json']
+            output.latex = data['text/latex'].split('\n')
+            output.html = data['text/html'].split('\n')
+
+        # for debugging:
         import sys
         sys.stderr.write('cell.metadata: ' + `find_and_merge_metadata(cell)` + '\n')
 

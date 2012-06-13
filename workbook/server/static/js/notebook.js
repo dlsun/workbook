@@ -100,6 +100,10 @@ var IPython = (function (IPython) {
             } else if (event.which === 77 && event.ctrlKey && that.control_key_active == false) {
                 that.control_key_active = true;
                 return false;
+            } else if (event.which === 67 && event.shiftKey) {
+		// Shift-c
+                that.check_selected_cell();
+                return false;
             } else if (event.which === 88 && that.control_key_active) {
                 // Cut selected cell = x
                 that.cut_cell();
