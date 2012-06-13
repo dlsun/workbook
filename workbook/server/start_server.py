@@ -5,13 +5,17 @@ from IPython.nbformat import current as nbformat
 
 # need to setup proper package structure
 
-from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo
+from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.owner import StudentOwner, RemoveOwner
 from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
 
 from workbook.utils.homework_creator import create_assignment
 from workbook.utils.questions import find_identified_cell, construct_question
+
+# for constructing the encryption key, iv
+
+import random, base64
 
 datadir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
@@ -37,6 +41,10 @@ def check_user(request):
         user_num = '00000000'
         user_id = 'testing'
     user = {'name': user_name, 'num': user_num, 'id': user_id}
+    folder = os.path.join(PATH_TO_HW_FILES, user['id'])
+    if not os.path.exists(folder):
+        generate_student(user, folder)
+    set_student_cipher(user, folder)
     return user
 
 # load list of notebooks for each student
@@ -46,20 +54,42 @@ def index():
     user = check_user(request)
     # see if user has his own directory; if not, make one
     folder = os.path.join(PATH_TO_HW_FILES, user['id'])
-    if not os.path.exists(folder):
-        StudentCreator(user['id'], user['name']).render()
-        os.makedirs(folder)
-        # copy files from master directory to newly made folder
-        for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):
-            outfile = create_assignment(hw_dir, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
-                                        os.path.join(PATH_TO_STUDENTS,user['id'] + '.ipynb'))
-            shutil.copy(outfile, folder)
     # get a list of all the notebooks in directory
     nb_files = glob.glob(os.path.join(folder,'*.ipynb'))
     nbs = [ nbformat.read(open(nb_file, 'rb'), 'json') for nb_file in nb_files ]
     # strip folder from the filename
     nb_files = [ os.path.split(path)[1] for path in nb_files ]
     return render_template('index.html',user = user, nb_files=nb_files, nbs=nbs)
+
+def generate_student(user, folder):
+    StudentCreator(user['id'], user['name']).render()
+    os.makedirs(folder)
+
+    # make encryption data
+
+    key = base64.b64encode(unicode.encode(
+            ''.join([unichr(random.choice((0x300, 0x2000))
+                            +random.randint(0,0xff)) for _ in range(KEY_SIZE)]), 'utf-8'))[:KEY_SIZE]
+
+    iv = base64.b64encode(unicode.encode(
+            ''.join([unichr(random.choice((0x300, 0x2000))
+                            +random.randint(0,0xff)) for _ in range(BLOCK_SIZE)]), 'utf-8'))[:BLOCK_SIZE]
+
+    open(os.path.join(folder, 'encryption.json'), 'wb').write(json.dumps({'key':key,
+                                                             'iv':iv}))
+
+    # copy files from master directory to newly made folder
+    for hw_dir in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*')):
+        outfile = create_assignment(hw_dir, os.path.join(PATH_TO_HEADERS,'standard_header.ipynb'), 
+                                    os.path.join(PATH_TO_STUDENTS,user['id'] + '.ipynb'))
+        shutil.copy(outfile, folder)
+
+def set_student_cipher(user, folder):
+
+    d = json.load(open(os.path.join(folder, 'encryption.json'), 'rb'))
+    key = d['key']
+    iv = d['iv']
+    user['cipher'] = Cipher(key, iv)
 
 # load the notebook page
 @app.route('/hw/<nb>')
@@ -73,7 +103,13 @@ def load_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
-    nb = compose_converters(nb, EncryptTeacherInfo, StudentOwner)
+
+    # filenames of converters will be adjusted by  compose_converters
+
+    encrypt = EncryptTeacherInfo(filename, 'encrypt', user['cipher']) 
+    student = StudentOwner(filename, 'student')
+    
+    nb = compose_converters(nb, encrypt, student)
     nb.metadata.name = nbname
     nbformat.write(nb, file('test.ipynb','wb'), 'json')
     return json.dumps(nb)
@@ -84,8 +120,13 @@ def save_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
-    # nbformat.write(nb, file('dump.ipynb', 'wb'), 'json')
-    nb = compose_converters(nb, RemoveOwner, DecryptTeacherInfo)
+
+    # filenames of converters will be adjusted by  compose_converters
+
+    decrypt = EncryptTeacherInfo(filename, 'decrypt', user['cipher']) 
+    rmstudent = RemoveOwner(filename, 'studentrm')
+    
+    nb = compose_converters(nb, rmstudent, decrypt)
     nb.metadata.name = nbname
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data

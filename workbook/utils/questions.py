@@ -106,7 +106,7 @@ class MultipleChoice(object):
         return self.selected
 
     def set_answer(self, answer):
-        if answer not in list(self.choices):
+        if answer and answer not in list(self.choices):
             # will this get raised?
             raise ValueError('answer should be in choices! %s' % `(answer, self.choices)`)
         self.selected = answer
@@ -121,7 +121,7 @@ class TrueFalse(MultipleChoice):
         return self.selected
 
     def set_answer(self, answer):
-        if str(answer) not in ['True', 'False']:
+        if answer and str(answer) not in ['True', 'False']:
             # will this get raised?
             raise ValueError('answer should be in choices! %s' % `(answer, self.choices)`)
         self.selected = answer
