@@ -1,6 +1,8 @@
 import tempfile, os
 import IPython.nbformat.current as nbformat
 
+from ..external.nbconvert import ConverterNotebook
+
 import encrypt, owner
 
 def compose_converters(nb, *converter_classes):

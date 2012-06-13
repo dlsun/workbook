@@ -1289,8 +1289,8 @@ var IPython = (function (IPython) {
 		data : JSON.stringify(data),
 		headers : {'Content-Type': 'application/json'},
 		contentType: 'application/json;charset=UTF-8', // added by Dennis
-// 		success : $.proxy(this.save_notebook_success,this),
-// 		error : $.proxy(this.save_notebook_error,this)
+ 		success : $.proxy(this.save_notebook_success,this),
+ 		error : $.proxy(this.save_notebook_error,this)
 	    };
 	    var url = '/hw/' + nb  + '/check'
 		$.ajax(url, settings);
@@ -1314,8 +1314,8 @@ var IPython = (function (IPython) {
 		data : JSON.stringify(data),
 		headers : {'Content-Type': 'application/json'},
 		contentType: 'application/json;charset=UTF-8', // added by Dennis
-// 		success : $.proxy(this.save_notebook_success,this),
-// 		error : $.proxy(this.save_notebook_error,this)
+ 		success : $.proxy(this.save_notebook_success,this),
+ 		error : $.proxy(this.save_notebook_error,this)
 	    };
 	    var url = '/hw/' + nb  + '/check'
 		$.ajax(url, settings);
@@ -1325,6 +1325,11 @@ var IPython = (function (IPython) {
     Notebook.prototype.save_notebook_success = function (data, status, xhr) {
         this.dirty = false;
         $([IPython.events]).trigger('notebook_saved.Notebook');
+
+	// add a handler to all forms
+	$('input').live('change', function() {
+		this.form.value = this.value;
+	});
     };
 
 
@@ -1365,6 +1370,13 @@ var IPython = (function (IPython) {
         }
 */        this.select(0);
         this.scroll_to_top();
+
+	// add a handler to all forms
+	$('input').live('change', function() {
+		this.form.value = this.value;
+	});
+
+
         if (data.orig_nbformat !== undefined && data.nbformat !== data.orig_nbformat) {
             msg = "This notebook has been converted from an older " +
             "notebook format (v"+data.orig_nbformat+") to the current notebook " +

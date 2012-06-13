@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-import os, shutil, glob, json
+import os, shutil, glob, json, tempfile
 
 from IPython.nbformat import current as nbformat
 
@@ -8,10 +8,10 @@ from IPython.nbformat import current as nbformat
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo
 from workbook.converters.owner import StudentOwner, RemoveOwner
 from workbook.converters.student_creator import StudentCreator
-from workbook.converters import compose_converters
+from workbook.converters import compose_converters, ConverterNotebook
 
 from workbook.utils.homework_creator import create_assignment
-from workbook.utils.questions import find_identified_cell
+from workbook.utils.questions import find_identified_cell, construct_question
 
 datadir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
@@ -84,7 +84,7 @@ def save_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
-    nbformat.write(nb, file('dump.ipynb', 'wb'), 'json')
+    # nbformat.write(nb, file('dump.ipynb', 'wb'), 'json')
     nb = compose_converters(nb, RemoveOwner, DecryptTeacherInfo)
     nb.metadata.name = nbname
     nbformat.write(nb, open(filename, 'wb'), 'json')
@@ -95,14 +95,24 @@ def save_nb(nbname):
 def check_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
-    nb = nbformat.read(open(filename, 'rb'), 'json')
-    import sys; sys.stdout.write(`request.form.keys()`)
+    tmpf = os.path.splitext(filename)[0] + '_tmp'
+    converter = ConverterNotebook(filename, tmpf)
+    converter.read()
     answers = {}
     for identifier, answer in request.json:
-        cell, output = find_identified_cell(nb, identifier)
+        cell, output = find_identified_cell(converter.nb, identifier)
         answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer, 'constructor_info':output.json.constructor_info}
-    file('dump.json', 'wb').write(json.dumps(answers))
-    return request.data
+        name, args, kw = output.json.constructor_info
+        question = construct_question(name, args, kw)
+        data = question.check_answer(answer)
+        # would be nice to automatically have this done
+        output.json = data['application/json'] # json.dumps(data['application/json'])
+        output.latex = data['text/latex'].split('\n')
+        output.html = data['text/html'].split('\n')
+    ofile = converter.render()
+    os.rename(ofile, filename)
+    nb = nbformat.read(open(filename, 'rb'), 'json')
+    return json.dumps(nb)
 
 # start server
 

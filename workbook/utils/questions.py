@@ -5,23 +5,36 @@ import json
 class HomeworkCounter(object):
 
     def __init__(self):
-        self.question_number = 1
+        self.question_number = 0
 
     def next(self):
-        publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question %d</h2>" % self.question_number})
         self.question_number += 1
+        publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question %d</h2>" % self.question_number})
 
 
 class Question(object):
 
-    def publish(self):
+    def publish(self, return_data=False):
         raise NotImplementedError
 
     @property
     def constructor_info(self):
         return None
 
+    def set_answer(self):
+        raise NotImplementedError
+
+    def get_answer(self):
+        raise NotImplementedError
+
+    answer = property(get_answer, set_answer)
+
+    def check_answer(self, answer):
+        raise NotImplementedError
+
 class MultipleChoice(object):
+
+    checkable = True
 
     def __init__(self, identifier, question_text, choices, correct_answer,
                  assignment='assignment1', selected=None,
@@ -47,10 +60,13 @@ class MultipleChoice(object):
         args = [self.identifier, self.question_text, self.choices, self.correct_answer]
         kw = {'assignment':self.assignment,
               'selected':self.selected,
-              'shuffle':self.shuffle}
+              'shuffle':False}
         return ('multiple_choice', args, kw)
 
-    def publish(self):
+    def publish(self, return_data=False):
+
+        data = {'text/latex':self.question_text,
+                'text/html':''}
 
         publish_display_data("HomeworkBuilder", {'text/latex':self.question_text})
 
@@ -64,17 +80,53 @@ class MultipleChoice(object):
                 buttons.append("""<p><input type="radio" name=%(identifier)s value="%(value)s" id="%(value)s" checked="checked"> %(value)s</p>""" % d)
             else:
                 buttons.append("""<p><input type="radio" name=%(identifier)s value="%(value)s" id="%(value)s"> %(value)s</p>""" % d)
-        radio_code = ('<form name="%(identifier)s" method="post" action="%(url)s/check">\n' % d) + '\n'.join(buttons) + '</form>\n'
+        radio_code = ('<form name="%(identifier)s" method="post" >\n' % d) + '\n'.join(buttons) + '</form>\n'
 
-        publish_display_data("HomeworkBuilder", {'text/html':radio_code})
-        publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':self.identifier,
-                                                                      'checkable':True,
-                                                                      'correct_answer':self.correct_answer,
-                                                                      'constructor_info':self.constructor_info}})
+        data['text/html'] += radio_code
+        data['application/json'] = {'question_identifier':self.identifier,
+                                     'checkable':False,
+                                     'correct_answer':self.correct_answer,
+                                     'constructor_info':self.constructor_info}
 
-        publish_display_data("HomeworkBuilder", {'application/json': {'constructor_info':self.constructor_info}})
+        publish_display_data("HomeworkBuilder", data)
+
+        if return_data:
+            return data
+
+    def check_answer(self, answer):
+        self.answer = answer
+        data = self.publish(return_data=True)
+        if self.selected == self.correct_answer:
+            data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
+        else:
+            data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
+        return data
+
+    def get_answer(self):
+        return self.selected
+
+    def set_answer(self, answer):
+        if answer not in list(self.choices):
+            # will this get raised?
+            raise ValueError('answer should be in choices! %s' % `(answer, self.choices)`)
+        self.selected = answer
+
+    answer = property(get_answer, set_answer)
 
 class TrueFalse(MultipleChoice):
+
+    checkable = True
+
+    def get_answer(self):
+        return self.selected
+
+    def set_answer(self, answer):
+        if str(answer) not in ['True', 'False']:
+            # will this get raised?
+            raise ValueError('answer should be in choices! %s' % `(answer, self.choices)`)
+        self.selected = answer
+
+    answer = property(get_answer, set_answer)
 
     def __init__(self, identifier, question_text, correct_answer, 
                  assignment='assignment1', selected=None):
@@ -88,45 +140,66 @@ class TrueFalse(MultipleChoice):
     def constructor_info(self):
         args = [self.identifier, self.tf_question_text, self.correct_answer]
         kw = {'assignment':self.assignment,
-                   'selected':self.selected}
+              'selected':self.selected}
         return ('true_false', args, kw)
 
 class TextBox(MultipleChoice):
 
+    checkable = True
+
     def __init__(self, identifier, question_text, correct_answer=None, 
-                 assignment='assignment1', selected=None):
+                 assignment='assignment1', answer=None):
         self.identifier = identifier
         self.question_text = question_text
         self.correct_answer = correct_answer
         self.assignment = assignment
-        self.selected = selected
+        self.answer = answer
 
     @property
     def constructor_info(self):
         args = [self.identifier, self.question_text]
         kw = {'correct_answer':self.correct_answer,
               'assignment':self.assignment,
-              'selected':self.selected}
+              'answer':self.answer}
         return ('textbox', args, kw)
 
-    def publish(self):
-        publish_display_data("HomeworkBuilder", {'text/latex':self.question_text})
+    def publish(self, return_data=False):
+        data = {'text/latex':self.question_text,
+                'text/html':''}
 
         d = {'identifier': self.identifier,
              'url': self.assignment}
 
         textbox_code = '''
-        <form method="post" name=%(identifier)s action="%(url)s/check"><p><input type="text" ></p></form>
+        <form method="post" name=%(identifier)s ><p><input type="text" ></p></form>
         ''' % d
 
-        publish_display_data("HomeworkBuilder", {'text/html':textbox_code})
-        publish_display_data("HomeworkBuilder", {'application/json': {'question_identifier':self.identifier,
-                                                                      'checkable':False,
-                                                                      'correct_answer':self.correct_answer,
-                                                                      'constructor_info':self.constructor_info}})
-        publish_display_data("HomeworkBuilder", {'application/json': {'constructor_info':self.constructor_info}})
+        data['text/html'] += textbox_code
+        data['application/json'] = {'question_identifier':self.identifier,
+                                     'checkable':False,
+                                     'correct_answer':self.correct_answer,
+                                     'constructor_info':self.constructor_info}
+        publish_display_data("HomeworkBuilder", data)
 
+        if return_data:
+            return data
 
+    def get_answer(self):
+        return self._answer
+
+    def set_answer(self, answer):
+        self._answer = answer
+
+    answer = property(get_answer, set_answer)
+
+    def check_answer(self, answer):
+        self.answer = answer
+        data = self.publish(return_data=True)
+        if self.answer == self.correct_answer:
+            data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
+        else:
+            data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
+        return data
 
 def is_identified_cell(cell, identifier):
     if hasattr(cell, 'outputs'):
@@ -149,3 +222,7 @@ def find_identified_cell(nb, identifier):
                 return cell, value
     return None, None
 
+def construct_question(name, args, keyword_args):
+    return {'multiple_choice':MultipleChoice,
+            'true_false':TrueFalse,
+            'textbox':TextBox}[name](*args, **keyword_args)
