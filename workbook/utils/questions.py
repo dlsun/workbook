@@ -212,7 +212,12 @@ def find_identified_cell(nb, identifier):
                 return cell, value
     return None, None
 
+question_types = {'multiple_choice':MultipleChoice,
+                  'true_false':TrueFalse,
+                  'textbox':TextBox}
+
+def register_question_type(name, constructor):
+    question_types[name] = constructor
+
 def construct_question(name, args, keyword_args):
-    return {'multiple_choice':MultipleChoice,
-            'true_false':TrueFalse,
-            'textbox':TextBox}[name](*args, **keyword_args)
+    return question_types[name](*args, **keyword_args)
