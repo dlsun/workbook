@@ -6,7 +6,7 @@ existing notebook.
 import copy, os, sys, shutil
 import glob
 from .execute_and_save import execute_and_save
-from ..converters import owner, encrypt, sync_metadata_name
+from ..converters import owner, encrypt, sync_metadata_name, AddMetadata
 from ..external import nbconvert as nb
 
 def merge_notebooks(outbase, *notebooks):
@@ -29,6 +29,11 @@ def create_assignment(assignmentbase, header, student_nb):
     questions = sorted(glob.glob(os.path.join(assignmentbase, 'q*.ipynb')))
     outfile = merge_notebooks(os.path.join(odir, os.path.split(assignmentbase)[1]), student_nb, header, *questions)
     newfile = execute_and_save(outfile)
+    os.rename(newfile, outfile)
+    converter = AddMetadata(outfile, os.path.splitext(outfile)[0] + '_tmp',
+                            {'workbook_metadata':{'owner':'teacher',
+                                                  'color':'blue'}})
+    newfile = converter.render()
     os.rename(newfile, outfile)
     sync_metadata_name(outfile)
     return outfile

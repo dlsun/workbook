@@ -47,7 +47,7 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
                 # don't encrypt the metadata
                 if hasattr(output, "json"):
                     try:
-                        if 'metadata' not in output.json.keys():
+                        if 'workbook_metadata' not in output.json.keys():
                             output.json = self.cipher.encrypt(json.dumps(output.json))
                     except:
                         output.json = self.cipher.encrypt(json.dumps(output.json))
@@ -69,7 +69,7 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
                 # don't encrypt the metadata
                 if hasattr(output, "json"):
                     try:
-                        if 'metadata' not in output.json.keys():
+                        if 'workbook_metadata' not in output.json.keys():
                             output.json = json.loads(self.cipher.decrypt(output.json))
                     except:
                         output.json = json.loads(self.cipher.decrypt(output.json))

@@ -1,6 +1,8 @@
 import tempfile, os
 import IPython.nbformat.current as nbformat
 
+from metadata import AddMetadata
+
 from ..external.nbconvert import ConverterNotebook
 
 import encrypt, owner
