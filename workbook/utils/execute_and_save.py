@@ -114,12 +114,12 @@ def run_cell(km, cell):
     # else student
     owner = NotebookNode(output_type='display_data')
     if cell.input:
-        owner.json = {'metadata':{'owner':'teacher',
-                                  'color':'green'}
+        owner.json = {'workbook_metadata':{'owner':'teacher',
+                                           'color':'green'}
                       }
     else:
-        owner.json = {'metadata':{'owner':'student',
-                                  'color':'yellow'}
+        owner.json = {'workbook_metadata':{'owner':'student',
+                                           'color':'yellow'}
                       }
     outs.append(owner)
     return outs

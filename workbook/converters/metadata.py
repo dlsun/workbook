@@ -9,8 +9,8 @@ def find_metadata(cell):
         for output in cell.outputs:
             if 'json' in output:
                 try:
-                    if 'metadata' in output.json.keys():
-                        return output.json['metadata']
+                    if 'workbook_metadata' in output.json.keys():
+                        return output.json['workbook_metadata']
                 except:
                     pass
     return {'owner':'noone'}
