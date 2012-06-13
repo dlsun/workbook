@@ -10,7 +10,6 @@ BLOCK_SIZE = 16
 KEY_SIZE = 16
 AES.block_size = BLOCK_SIZE
 
-from owner import find_owner
 from metadata import find_metadata
 
 class Cipher(object):
@@ -43,11 +42,16 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
     @nbc.DocInherit
     def render_code(self, cell):
         if find_metadata(cell)['owner'] == 'teacher':
-        #if find_owner(cell) == 'teacher':
             cell.input = self.cipher.encrypt(cell.input)
             for output in cell.outputs:
-                if hasattr(output, "json") and 'owner' not in output.json.keys():
-                        output.json = self.cipher.encrypt(cell.input)
+                # don't encrypt the metadata
+                if hasattr(output, "json"):
+                    try:
+                        if 'metadata' not in output.json.keys():
+                            output.json = self.cipher.encrypt(json.dumps(output.json))
+                    except:
+                        output.json = self.cipher.encrypt(json.dumps(output.json))
+                        pass
 
         return nbc.ConverterNotebook.render_code(self, cell)
 
@@ -59,13 +63,17 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        #if find_owner(cell) == 'teacher':
         if find_metadata(cell)['owner'] == 'teacher':
             cell.input = self.cipher.decrypt(cell.input)
             for output in cell.outputs:
-                if hasattr(output, "json") and 'owner' not in output.json.keys():
-                    output.json = self.cipher.decrypt(cell.input)
-
+                # don't encrypt the metadata
+                if hasattr(output, "json"):
+                    try:
+                        if 'metadata' not in output.json.keys():
+                            output.json = json.loads(self.cipher.decrypt(output.json))
+                    except:
+                        output.json = json.loads(self.cipher.decrypt(output.json))
+                        pass
         return nbc.ConverterNotebook.render_code(self, cell)
 
 if __name__ == "__main__":

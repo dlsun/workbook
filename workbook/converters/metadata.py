@@ -3,17 +3,6 @@ import json
 from ..external import nbconvert as nbc
 import base64
 
-def find_owner(cell):
-    if hasattr(cell, 'outputs'):
-        for output in cell.outputs:
-            if 'json' in output:
-                try:
-                    if 'owner' in output.json.keys():
-                        return output.json['owner']
-                except:
-                    pass
-    return None
-
 
 def find_metadata(cell):
     if hasattr(cell, 'outputs'):
@@ -24,7 +13,7 @@ def find_metadata(cell):
                         return output.json['metadata']
                 except:
                     pass
-    return None
+    return {'owner':'noone'}
 
 class StudentMetadata(nbc.ConverterNotebook):
     extension = 'json' # the output is not officially .ipynb

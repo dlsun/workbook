@@ -6,7 +6,6 @@ from IPython.nbformat import current as nbformat
 # need to setup proper package structure
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
-from workbook.converters.owner import StudentOwner, RemoveOwner
 from workbook.converters.metadata import StudentMetadata, RemoveMetadata
 from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
@@ -100,13 +99,11 @@ def hw(nb):
     user = check_user(request)
     return render_template('homework.html',nb = nb)
 
-# load the JSON file of the notebook
-@app.route('/hw/<nbname>/load', methods=['GET'])
-def load_nb(nbname):
-    global counter
-    user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
-    nb = nbformat.read(open(filename, 'rb'), 'json')
+def forward(nb, filename, user, nbname):
+    """
+    converters in forward direction
+
+    """
 
     # filenames of converters will be adjusted by  compose_converters
 
@@ -117,6 +114,33 @@ def load_nb(nbname):
     nb = compose_converters(nb, student, encrypt)
     nb.metadata.name = nbname
 
+    return nb
+
+
+def reverse(nb, filename, user, nbname):
+    """
+    converters in reverse direction
+
+    """
+    # filenames of converters will be adjusted by  compose_converters
+
+    decrypt = DecryptTeacherInfo(filename, 'decrypt', user['cipher']) 
+    rm_meta = RemoveMetadata(filename, 'rm_meta')
+    
+    # composition is right to left
+    nb = compose_converters(nb, decrypt, rm_meta)
+    nb.metadata.name = nbname
+
+    return nb
+
+# load the JSON file of the notebook
+@app.route('/hw/<nbname>/load', methods=['GET'])
+def load_nb(nbname):
+    global counter
+    user = check_user(request)
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+    nb = nbformat.read(open(filename, 'rb'), 'json')
+    nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)
 
 # save the JSON file of the notebook
@@ -126,15 +150,7 @@ def save_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
-
-    # filenames of converters will be adjusted by  compose_converters
-
-    decrypt = EncryptTeacherInfo(filename, 'decrypt', user['cipher']) 
-    rmstudent = RemoveMetadata(filename, 'studentrm')
-    
-    # composition is right to left
-    nb = compose_converters(nb, decrypt, rmstudent)
-    nb.metadata.name = nbname
+    nb = reverse(nb, filename, user, nbname)
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
 

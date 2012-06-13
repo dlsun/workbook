@@ -32,6 +32,9 @@ class Question(object):
     def check_answer(self, answer):
         raise NotImplementedError
 
+class Generator(Question):
+    pass
+
 class MultipleChoice(object):
 
     checkable = True
