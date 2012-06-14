@@ -35,7 +35,7 @@ class Question(object):
 
     answer = property(get_answer, set_answer)
 
-    def check_answer(self, answer):
+    def check_answer(self, output, answer):
         raise NotImplementedError
 
 class Generator(Question):
@@ -84,12 +84,15 @@ class MultipleChoice(object):
         radio_code = ('<form name="%(identifier)s" method="post" >\n' % d) + '\n'.join(buttons) + '</form>\n'
 
         html_data = {'text/html': radio_code}
-        json_data = {'application/json': {'question_identifier':self.identifier,
+        json_data = {'application/json': {'identifier':self.identifier,
                                           'constructor_info':self.constructor_info}}
 
         if display:
+            # this update puts the question identifier info in this output
+
+            latex_data.update(json_data)
             publish_display_data("HomeworkBuilder", latex_data)
-            # this puts the question identifier info in this output
+
             html_data.update(json_data)
             publish_display_data("HomeworkBuilder", html_data)
 
@@ -99,15 +102,21 @@ class MultipleChoice(object):
                 data.update(d)
             return data
 
-    def check_answer(self, answer):
+    def check_answer(self, output, answer):
         self.answer = answer
         data = self.publish(return_data=True, display=False)
         if self.answer == self.correct_answer:
-            data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
+            if "html" in output.keys():
+                output.html = data['text/html'].split('\n')
+                output.html.append('\n<p><h2>Good job!</h2></p>\n')
         elif self.answer:
-            data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
-        return data
+            if "html" in output.keys():
+                output.html = data['text/html'].split('\n')
+                output.html.append('\n<p><h2>Try again!</h2></p>\n')
 
+        if "latex" in output.keys():
+            output.latex = data['text/latex'].split('\n')
+                
     def get_answer(self):
         return self.selected
 
@@ -168,11 +177,14 @@ class TextBox(MultipleChoice):
         ''' % d
 
         html_data = {'text/html': textbox_code}
-        json_data = {'application/json':{'question_identifier':self.identifier,
+        json_data = {'application/json':{'identifier':self.identifier,
                                          'constructor_info':self.constructor_info}}
         if display:
-            publish_display_data("HomeworkBuilder", latex_data)
             # this puts the question identifier info in this output
+
+            latex_data.update(json_data)
+            publish_display_data("HomeworkBuilder", latex_data)
+
             html_data.update(json_data)
             publish_display_data("HomeworkBuilder", html_data)
 
@@ -190,15 +202,6 @@ class TextBox(MultipleChoice):
 
     answer = property(get_answer, set_answer)
 
-    def check_answer(self, answer):
-        self.answer = answer
-        data = self.publish(return_data=True, display=False)
-        if self.answer == self.correct_answer:
-            data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
-        elif self.answer:
-            data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
-        return data
-
 class NormalMean(object):
 
     """
@@ -215,26 +218,27 @@ class NormalMean(object):
         self.sd = sd
         self.n = n
         self.sequence = self.generate()
-        self.correct_answer = np.mean(self.sequence)
 
     def generate(self):
         return np.round(np.random.standard_normal(self.n), 1) * self.sd + self.mean
 
     @property
-    def answer(self):
+    def correct_answer(self):
         return np.mean(self.sequence)
 
     def publish(self, return_data=False, display=True):
         latex_data = {'text/latex': self.question_template % `[float("%0.1f" % s) for s in self.sequence]`}
         html_data = {'text/html': '<form method="post" name=%s ><p><input type="text" ></p></form>' % self.identifier}
-        json_data = {'application/json':{'question_identifier':self.identifier,
+        json_data = {'application/json':{'identifier':self.identifier,
                                          'constructor_info': ('normal_mean', [self.mean, self.sd, self.n, self.identifier], {})}}
 
         output_data = {}
         if display:
+            # this puts the question identifier info in this output
+
+            latex_data.update(json_data)
             publish_display_data("NormalMean", latex_data)
-            # this next bit puts the question identifier in the same output as the form which
-            # is important
+
             html_data.update(json_data)
             publish_display_data("NormalMean", html_data)
 
@@ -244,39 +248,59 @@ class NormalMean(object):
                         data.update(d)
             return data
 
-    def check_answer(self, answer):
+    def check_answer(self, output, answer):
+        self.answer = answer
+        data = self.publish(return_data=True, display=False)
         if np.fabs(float(answer) - float(self.correct_answer)) / np.std(self.sequence) < self.tol:
-            data = self.publish(return_data=True, display=False)
-            data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
-        else:
-            import sys
-            sys.stderr.write('before: ' + `self.sequence` + '\n')
-            self.sequence = self.generate()
-            data = self.publish(return_data=True, display=False)
-            data['text/html'] += '\n<p><h2>Try again with some new data...</h2></p>\n' 
-            sys.stderr.write('after: ' + `data['text/latex']` + '\n')
-            sys.stderr.write('after: ' + `self.sequence` + '\n')
-        return data
+            if "html" in output.keys():
+                output.html = data['text/html'].split('\n')
+                output.html.append('\n<p><h2>Good job!</h2></p>\n')
+        elif self.answer:
+            if "html" in output.keys():
+                output.html = data['text/html'].split('\n')
+                output.html.append('\n<p><h2>Try again with some new data!</h2></p>\n')
+
+        if "latex" in output.keys():
+            output.latex = data['text/latex'].split('\n')
+
   
-def is_identified_cell(cell, identifier):
+def find_identified_outputs(cell, identifier):
+    outputs = []
     if hasattr(cell, 'outputs'):
         for output in cell.outputs:
             if 'json' in output:
                 try:
-                    if 'question_identifier' in output.json.keys():
-                        if output.json['question_identifier'] == identifier:
-                            return True, output
+                    if ('identifier' in output.json.keys() and
+                        output.json['identifier'] == identifier):
+                            outputs.append(output)
                 except AttributeError:
                     pass
-    return False, None
+    return outputs
 
-def find_identified_cell(nb, identifier):
+def find_identified_cells(nb, identifier):
+    """
+    Find all cells in a notebook with a given identifier
+    in their json output.
+
+    """
+    cells = []
     for ws in nb.worksheets:
         for cell in ws.cells:
-            check, value = is_identified_cell(cell, identifier)
-            if check:
-                return cell, value
-    return None, None
+            outputs = find_identified_outputs(cell, identifier)
+            if outputs:
+                cells.append(cell)
+    return cells
+
+
+def update_output(output, identifier, answer):
+    """
+    Create a question from an output, and modify it in place
+    based on the given answer.
+    """
+    name, args, kw = output.json.constructor_info
+    question = construct_question(name, args, kw)
+    if question.checkable:
+        question.check_answer(output, answer)
 
 question_types = {'multiple_choice':MultipleChoice,
                   'true_false':TrueFalse,

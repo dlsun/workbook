@@ -12,7 +12,9 @@ from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
 
 from workbook.utils.homework_creator import create_assignment
-from workbook.utils.questions import find_identified_cell, construct_question
+from workbook.utils.questions import (find_identified_cells,
+                                      find_identified_outputs,
+                                      update_output)
 
 
 # for constructing the encryption key, iv
@@ -170,23 +172,16 @@ def check_nb(nbname):
 
     for identifier, answer in request.json:
 
-        cell, output = find_identified_cell(converter.nb, identifier)
-        name, args, kw = output.json.constructor_info
-        question = construct_question(name, args, kw)
-        if question.checkable:
-            data = question.check_answer(answer)
-            # would be nice to automatically have this done
-            import sys
-            sys.stderr.write('output before: ' + `output` + '\n')
-            output.json = data['application/json']
-            output.latex = data['text/latex'].split('\n')
-            output.html = data['text/html'].split('\n')
-            sys.stderr.write('output after: ' + `output` + '\n')
-            sys.stderr.write('cell after: ' + `cell` + '\n')
+        cells = find_identified_cells(converter.nb, identifier)
+        if len(cells) > 1:
+            raise ValueError('more than one match: %s' % '\n'.join([str(c) for c in cells]))
+        outputs = find_identified_outputs(cells[0], identifier)
+        for output in outputs:
+            update_output(output, identifier, answer)
 
         # for debugging:
         import sys
-        sys.stderr.write('cell.metadata: ' + `find_and_merge_metadata(cell)` + '\n')
+        sys.stderr.write('cell.metadata: ' + `find_and_merge_metadata(cells[0])` + '\n')
 
     ofile = converter.render()
     os.rename(ofile, filename)
