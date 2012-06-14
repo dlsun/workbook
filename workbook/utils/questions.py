@@ -212,6 +212,7 @@ class NormalMean(object):
 
     tol = 5.e-2
     checkable = True
+    class_name = 'normal_mean'
     question_template = r"What is the sample mean, $\bar{X}$ of this sequence: %s ?"
 
     # use student json seed
@@ -233,7 +234,7 @@ class NormalMean(object):
         latex_data = {'text/latex': self.question_template % `[float("%0.1f" % s) for s in self.sequence]`}
         html_data = {'text/html': '<form method="post" name=%s ><p><input type="text" ></p></form>' % self.identifier}
         json_data = {'application/json':{'identifier':self.identifier,
-                                         'constructor_info': ('normal_mean', [self.identifier, self.mean, self.sd, self.n], {})}}
+                                         'constructor_info': (self.class_name, [self.identifier, self.mean, self.sd, self.n], {})}}
 
         output_data = {}
         if display:
@@ -312,10 +313,7 @@ question_types = {'multiple_choice':MultipleChoice,
 
 def register_question_type(name, constructor):
     import sys
-    sys.stderr.write("HEREIAM\n")
     question_types[name] = constructor
-    sys.stderr.write(`question_types`+'\n')
-    sys.stderr.write("HOW CAN WE UPDATE THIS DYNAMICALLY?\n")
 
 def construct_question(name, args, keyword_args):
     return question_types[name](*args, **keyword_args)

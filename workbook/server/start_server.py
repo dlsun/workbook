@@ -9,7 +9,7 @@ from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, 
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata)
 from workbook.converters import compose_converters
 
-from workbook.server.answer_checker import check_answer
+from workbook.server.answer_checker import update_question_types, check_answer
 from workbook.utils.homework_creator import create_assignment
 from workbook.io import *
 
@@ -61,6 +61,7 @@ def index():
     nbs = [ nbformat.read(open(nb_file, 'rb'), 'json') for nb_file in nb_files ]
     # strip folder from the filename
     nb_files = [ os.path.split(path)[1] for path in nb_files ]
+
     return render_template('index.html',user = user, nb_files=nb_files, nbs=nbs)
 
 def generate_student(user):
@@ -178,6 +179,7 @@ def check_nb(nbname):
 # start server
 
 def main():
+    update_question_types()
     app.run(debug=True,host='0.0.0.0', use_reloader=False, use_debugger=True)
     #app.run(debug=False,host='0.0.0.0')
 
