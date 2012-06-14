@@ -8,25 +8,17 @@ from IPython.nbformat import current as nbformat
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata, 
                                           find_and_merge_metadata)
-from workbook.converters.student_creator import StudentCreator
 from workbook.converters import compose_converters, ConverterNotebook
 
 from workbook.utils.homework_creator import create_assignment
 from workbook.utils.questions import (find_identified_cells,
                                       find_identified_outputs,
                                       update_output)
-
+from workbook.io import *
 
 # for constructing the encryption key, iv
 
 import random, base64
-
-datadir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-PATH_TO_HW_FILES = os.path.join(datadir, 'notebooks')
-PATH_TO_HW_TEMPLATES = os.path.join(datadir, 'hw_templates')
-PATH_TO_HEADERS = os.path.join(datadir, 'headers')
-PATH_TO_STUDENTS = os.path.join(datadir, 'students')
 
 counter = 0
 
@@ -47,11 +39,14 @@ def check_user(request):
         user_num = '00000000'
         user_id = 'testing'
     user = {'name': user_name, 'num': user_num, 'id': user_id}
-    folder = os.path.join(PATH_TO_HW_FILES, user['id'])
+    folder = user_folder(user)
     if not os.path.exists(folder):
-        generate_student(user, folder)
-    set_student_cipher(user, folder)
+        generate_student(user)
+    set_student_cipher(user)
     return user
+
+def user_folder(user):
+    return os.path.join(PATH_TO_HW_FILES, user['id'])
 
 # load list of notebooks for each student
 @app.route('/')
@@ -59,16 +54,21 @@ def index():
     # parse headers to get user information
     user = check_user(request)
     # see if user has his own directory; if not, make one
-    folder = os.path.join(PATH_TO_HW_FILES, user['id'])
+    folder = user_folder(user)
     # get a list of all the notebooks in directory
-    nb_files = glob.glob(os.path.join(folder,'*.ipynb'))
+    for template in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'*.ipynb')):
+        student_file = os.path.join(folder, os.path.split(template)[1])
+        if not os.path.exists(student_file):
+            generate_assignment(template, user)
+    nb_files = glob.glob(os.path.join(folder, '*ipynb'))
     nbs = [ nbformat.read(open(nb_file, 'rb'), 'json') for nb_file in nb_files ]
     # strip folder from the filename
     nb_files = [ os.path.split(path)[1] for path in nb_files ]
     return render_template('index.html',user = user, nb_files=nb_files, nbs=nbs)
 
-def generate_student(user, folder):
-    StudentCreator(user['id'], user['name']).render()
+def generate_student(user):
+    #StudentCreator(user['id'], user['name']).render()
+    folder = user_folder(user)
     os.makedirs(folder)
 
     # make encryption data
@@ -87,13 +87,14 @@ def generate_student(user, folder):
                                                                             'id':user['id'],
                                                                             'seed':random.randint(0,1000000)}))
 
-    # copy files from master directory to newly made folder
-    for hwfile in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'assignment*pynb')):
-        outfile = create_assignment(hwfile, os.path.join(folder, 'student_info.json'))
-        shutil.copy(outfile, folder)
+def generate_assignment(hwtemplate, user):
+    folder = user_folder(user)
+    outfile = create_assignment(hwtemplate, os.path.join(folder, 'student_info.json'))
+    # shutil.copy(outfile, folder)
 
-def set_student_cipher(user, folder):
+def set_student_cipher(user):
 
+    folder = user_folder(user)
     d = json.load(open(os.path.join(folder, 'student_info.json'), 'rb'))
     key = d['key']
     iv = d['iv']

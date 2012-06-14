@@ -9,6 +9,8 @@ from .execute_and_save import execute_and_save
 from ..converters import encrypt, sync_metadata_name, AddMetadata
 from ..external import nbconvert as nbc
 
+from workbook.io import *
+
 def merge_notebooks(outbase, *notebooks):
     if len(notebooks) == 0:
         raise ValueError('no notebooks to merge!')
@@ -28,7 +30,7 @@ def create_assignment(assignmentfile, student_info):
 
     # make output directory
 
-    odir = os.path.join('..', 'notebooks', student_id)
+    odir = os.path.join(PATH_TO_HW_FILES, student_id)
     if not os.path.exists(odir):
         os.makedirs(odir)
 

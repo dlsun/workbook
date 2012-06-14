@@ -513,11 +513,16 @@ var IPython = (function (IPython) {
         var i = this.index_or_selected(index);
         if (this.is_valid_cell_index(i)) {
             var ce = this.get_cell_element(i);
+	    var cell = this.get_cell(i);
+	    if (cell.cell_type != "workbook") { 
             ce.remove();
             if (i === (this.ncells())) {
                 this.select(i-1);
             } else {
                 this.select(i);
+            };
+	    } else {
+		alert("Cell cannot be deleted.")		
             };
             this.dirty = true;
         };
