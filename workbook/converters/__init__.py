@@ -3,7 +3,7 @@ import IPython.nbformat.current as nbformat
 
 from metadata import AddMetadata
 
-from ..external.nbconvert import ConverterNotebook
+from ..external.nbconvert import ConverterNotebook, Converter
 
 import encrypt, owner
 

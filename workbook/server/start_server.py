@@ -6,14 +6,11 @@ from IPython.nbformat import current as nbformat
 
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
-from workbook.converters.metadata import (StudentMetadata, RemoveMetadata, 
-                                          find_and_merge_metadata)
-from workbook.converters import compose_converters, ConverterNotebook
+from workbook.converters.metadata import (StudentMetadata, RemoveMetadata)
+from workbook.converters import compose_converters
 
+from workbook.server.answer_checker import check_answer
 from workbook.utils.homework_creator import create_assignment
-from workbook.utils.questions import (find_identified_cells,
-                                      find_identified_outputs,
-                                      update_output)
 from workbook.io import *
 
 # for constructing the encryption key, iv
@@ -167,25 +164,12 @@ def check_nb(nbname):
     global counter
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
-    tmpf = os.path.splitext(filename)[0] + '_tmp'
-    converter = ConverterNotebook(filename, tmpf)
-    converter.read()
-
+    
     for identifier, answer in request.json:
+        outfile = check_answer(filename, identifier, answer)
 
-        cells = find_identified_cells(converter.nb, identifier)
-        if len(cells) > 1:
-            raise ValueError('more than one match: %s' % '\n'.join([str(c) for c in cells]))
-        outputs = find_identified_outputs(cells[0], identifier)
-        for output in outputs:
-            update_output(output, identifier, answer)
-
-        # for debugging:
-        import sys
-        sys.stderr.write('cell.metadata: ' + `find_and_merge_metadata(cells[0])` + '\n')
-
-    ofile = converter.render()
-    os.rename(ofile, filename)
+    # this should be reduntant now
+    os.rename(outfile, filename)
 
     nb = nbformat.read(open(filename, 'rb'), 'json')
     nb = forward(nb, filename, user, nbname)
