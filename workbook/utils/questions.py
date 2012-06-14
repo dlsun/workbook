@@ -10,6 +10,7 @@ class HomeworkCounter(object):
     def next(self):
         self.question_number += 1
         publish_display_data("HomeworkBuilder", {'text/html':"<h2>Question %d</h2>" % self.question_number})
+        publish_workbook_metadata({'worksheet':self.question_number})
 
 
 def publish_workbook_metadata(metadata):
@@ -57,6 +58,7 @@ class MultipleChoice(object):
         self.selected = selected
         self.question_text = question_text
         self.correct_answer = correct_answer
+        # assignment should be removed
         self.assignment = assignment
         self.identifier = identifier
 
@@ -212,7 +214,8 @@ class NormalMean(object):
     checkable = True
     question_template = r"What is the sample mean, $\bar{X}$ of this sequence: %s ?"
 
-    def __init__(self, mean, sd, n, identifier):
+    # use student json seed
+    def __init__(self, identifier, mean, sd, n):
         self.mean = mean
         self.identifier = identifier
         self.sd = sd
@@ -230,7 +233,7 @@ class NormalMean(object):
         latex_data = {'text/latex': self.question_template % `[float("%0.1f" % s) for s in self.sequence]`}
         html_data = {'text/html': '<form method="post" name=%s ><p><input type="text" ></p></form>' % self.identifier}
         json_data = {'application/json':{'identifier':self.identifier,
-                                         'constructor_info': ('normal_mean', [self.mean, self.sd, self.n, self.identifier], {})}}
+                                         'constructor_info': ('normal_mean', [self.identifier, self.mean, self.sd, self.n], {})}}
 
         output_data = {}
         if display:
@@ -297,8 +300,8 @@ def update_output(output, identifier, answer):
     Create a question from an output, and modify it in place
     based on the given answer.
     """
-    name, args, kw = output.json.constructor_info
-    question = construct_question(name, args, kw)
+    class_name, args, kw = output.json.constructor_info
+    question = construct_question(class_name, args, kw)
     if question.checkable:
         question.check_answer(output, answer)
 
