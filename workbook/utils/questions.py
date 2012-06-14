@@ -199,6 +199,65 @@ class TextBox(MultipleChoice):
             data['text/html'] += '\n<p><h2>Try again!</h2></p>\n'
         return data
 
+class NormalMean(object):
+
+    """
+    Sample from N(mean, sd) independently n times 
+    """
+
+    tol = 5.e-2
+    checkable = True
+    question_template = r"What is the sample mean, $\bar{X}$ of this sequence: %s ?"
+
+    def __init__(self, mean, sd, n, identifier):
+        self.mean = mean
+        self.identifier = identifier
+        self.sd = sd
+        self.n = n
+        self.sequence = self.generate()
+        self.correct_answer = np.mean(self.sequence)
+
+    def generate(self):
+        return np.round(np.random.standard_normal(self.n), 1) * self.sd + self.mean
+
+    @property
+    def answer(self):
+        return np.mean(self.sequence)
+
+    def publish(self, return_data=False, display=True):
+        latex_data = {'text/latex': self.question_template % `[float("%0.1f" % s) for s in self.sequence]`}
+        html_data = {'text/html': '<form method="post" name=%s ><p><input type="text" ></p></form>' % self.identifier}
+        json_data = {'application/json':{'question_identifier':self.identifier,
+                                         'constructor_info': ('normal_mean', [self.mean, self.sd, self.n, self.identifier], {})}}
+
+        output_data = {}
+        if display:
+            publish_display_data("NormalMean", latex_data)
+            # this next bit puts the question identifier in the same output as the form which
+            # is important
+            html_data.update(json_data)
+            publish_display_data("NormalMean", html_data)
+
+        if return_data:
+            data = {}
+            for d in [latex_data, html_data, json_data]:
+                        data.update(d)
+            return data
+
+    def check_answer(self, answer):
+        if np.fabs(float(answer) - float(self.correct_answer)) / np.std(self.sequence) < self.tol:
+            data = self.publish(return_data=True, display=False)
+            data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
+        else:
+            import sys
+            sys.stderr.write('before: ' + `self.sequence` + '\n')
+            self.sequence = self.generate()
+            data = self.publish(return_data=True, display=False)
+            data['text/html'] += '\n<p><h2>Try again with some new data...</h2></p>\n' 
+            sys.stderr.write('after: ' + `data['text/latex']` + '\n')
+            sys.stderr.write('after: ' + `self.sequence` + '\n')
+        return data
+  
 def is_identified_cell(cell, identifier):
     if hasattr(cell, 'outputs'):
         for output in cell.outputs:
@@ -221,7 +280,8 @@ def find_identified_cell(nb, identifier):
 
 question_types = {'multiple_choice':MultipleChoice,
                   'true_false':TrueFalse,
-                  'textbox':TextBox}
+                  'textbox':TextBox,
+                  'normal_mean':NormalMean}
 
 def register_question_type(name, constructor):
     import sys

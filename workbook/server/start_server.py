@@ -181,7 +181,8 @@ def check_nb(nbname):
             output.json = data['application/json']
             output.latex = data['text/latex'].split('\n')
             output.html = data['text/html'].split('\n')
-            sys.stderr.write('html: ' + `output.html` + '\n')
+            sys.stderr.write('output after: ' + `output` + '\n')
+            sys.stderr.write('cell after: ' + `cell` + '\n')
 
         # for debugging:
         import sys
