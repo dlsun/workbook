@@ -69,10 +69,9 @@ class MultipleChoice(object):
 
     def publish(self, return_data=False):
 
-        data = {'text/latex':self.question_text,
-                'text/html':''}
+        latex_data = {'text/latex':self.question_text}
 
-        publish_display_data("HomeworkBuilder", {'text/latex':self.question_text})
+        publish_display_data("HomeworkBuilder", latex_data)
 
         d = {'identifier': self.identifier,
              'url': self.assignment}
@@ -86,15 +85,17 @@ class MultipleChoice(object):
                 buttons.append("""<p><input type="radio" name=%(identifier)s value="%(value)s" id="%(value)s"> %(value)s</p>""" % d)
         radio_code = ('<form name="%(identifier)s" method="post" >\n' % d) + '\n'.join(buttons) + '</form>\n'
 
-        data['text/html'] += radio_code
-        data['application/json'] = {'question_identifier':self.identifier,
-                                     'checkable':False,
-                                     'correct_answer':self.correct_answer,
-                                     'constructor_info':self.constructor_info}
+        html_data = {'text/html': radio_code}
+        json_data = {'application/json': {'question_identifier':self.identifier,
+                                          'constructor_info':self.constructor_info}}
 
-        publish_display_data("HomeworkBuilder", data)
+        publish_display_data("HomeworkBuilder", html_data)
+        publish_display_data("HomeworkBuilder", json_data)
 
         if return_data:
+            data = {}
+            for d in [latex_data, html_data, json_data]:
+                data.update(d)
             return data
 
     def check_answer(self, answer):
@@ -139,7 +140,7 @@ class TextBox(MultipleChoice):
     checkable = True
 
     def __init__(self, identifier, question_text, correct_answer=None, 
-                 assignment='assignment1', answer=None):
+                 assignment='assignment1', answer=''):
         self.identifier = identifier
         self.question_text = question_text
         self.correct_answer = correct_answer
@@ -155,24 +156,27 @@ class TextBox(MultipleChoice):
         return ('textbox', args, kw)
 
     def publish(self, return_data=False):
-        data = {'text/latex':self.question_text,
-                'text/html':''}
+        latex_data = {'text/latex':self.question_text}
+        publish_display_data("HomeworkBuilder", latex_data)
 
         d = {'identifier': self.identifier,
-             'url': self.assignment}
+             'url': self.assignment,
+             'answer':self.answer}
 
         textbox_code = '''
-        <form method="post" name=%(identifier)s ><p><input type="text" ></p></form>
+        <form method="post" name=%(identifier)s ><p><input type="text" value="%(answer)s"></p></form>
         ''' % d
 
-        data['text/html'] += textbox_code
-        data['application/json'] = {'question_identifier':self.identifier,
-                                     'checkable':False,
-                                     'correct_answer':self.correct_answer,
-                                     'constructor_info':self.constructor_info}
-        publish_display_data("HomeworkBuilder", data)
+        html_data = {'text/html': textbox_code}
+        json_data = {'application/json':{'question_identifier':self.identifier,
+                                         'constructor_info':self.constructor_info}}
+        publish_display_data("HomeworkBuilder", html_data)
+        publish_display_data("HomeworkBuilder", json_data)
 
         if return_data:
+            data = {}
+            for d in [latex_data, html_data, json_data]:
+                data.update(d)
             return data
 
     def get_answer(self):
