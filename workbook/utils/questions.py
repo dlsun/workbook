@@ -20,7 +20,7 @@ def publish_workbook_metadata(metadata):
 
 class Question(object):
 
-    def publish(self, return_data=False):
+    def publish(self, return_data=False, display=True):
         raise NotImplementedError
 
     @property
@@ -67,11 +67,9 @@ class MultipleChoice(object):
               'selected':self.selected}
         return ('multiple_choice', args, kw)
 
-    def publish(self, return_data=False):
+    def publish(self, return_data=False, display=True):
 
         latex_data = {'text/latex':self.question_text}
-
-        publish_display_data("HomeworkBuilder", latex_data)
 
         d = {'identifier': self.identifier,
              'url': self.assignment}
@@ -89,8 +87,11 @@ class MultipleChoice(object):
         json_data = {'application/json': {'question_identifier':self.identifier,
                                           'constructor_info':self.constructor_info}}
 
-        publish_display_data("HomeworkBuilder", html_data)
-        publish_display_data("HomeworkBuilder", json_data)
+        if display:
+            publish_display_data("HomeworkBuilder", latex_data)
+            # this puts the question identifier info in this output
+            html_data.update(json_data)
+            publish_display_data("HomeworkBuilder", html_data)
 
         if return_data:
             data = {}
@@ -100,7 +101,7 @@ class MultipleChoice(object):
 
     def check_answer(self, answer):
         self.answer = answer
-        data = self.publish(return_data=True)
+        data = self.publish(return_data=True, display=False)
         if self.answer == self.correct_answer:
             data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
         elif self.answer:
@@ -155,9 +156,8 @@ class TextBox(MultipleChoice):
               'answer':self.answer}
         return ('textbox', args, kw)
 
-    def publish(self, return_data=False):
+    def publish(self, return_data=False, display=True):
         latex_data = {'text/latex':self.question_text}
-        publish_display_data("HomeworkBuilder", latex_data)
 
         d = {'identifier': self.identifier,
              'url': self.assignment,
@@ -170,8 +170,11 @@ class TextBox(MultipleChoice):
         html_data = {'text/html': textbox_code}
         json_data = {'application/json':{'question_identifier':self.identifier,
                                          'constructor_info':self.constructor_info}}
-        publish_display_data("HomeworkBuilder", html_data)
-        publish_display_data("HomeworkBuilder", json_data)
+        if display:
+            publish_display_data("HomeworkBuilder", latex_data)
+            # this puts the question identifier info in this output
+            html_data.update(json_data)
+            publish_display_data("HomeworkBuilder", html_data)
 
         if return_data:
             data = {}
@@ -189,7 +192,7 @@ class TextBox(MultipleChoice):
 
     def check_answer(self, answer):
         self.answer = answer
-        data = self.publish(return_data=True)
+        data = self.publish(return_data=True, display=False)
         if self.answer == self.correct_answer:
             data['text/html'] += '\n<p><h2>Good job!</h2></p>\n'
         elif self.answer:
@@ -221,7 +224,11 @@ question_types = {'multiple_choice':MultipleChoice,
                   'textbox':TextBox}
 
 def register_question_type(name, constructor):
+    import sys
+    sys.stderr.write("HEREIAM\n")
     question_types[name] = constructor
+    sys.stderr.write(`question_types`+'\n')
+    sys.stderr.write("HOW CAN WE UPDATE THIS DYNAMICALLY?\n")
 
 def construct_question(name, args, keyword_args):
     return question_types[name](*args, **keyword_args)

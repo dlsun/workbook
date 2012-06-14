@@ -165,22 +165,23 @@ def check_nb(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
     tmpf = os.path.splitext(filename)[0] + '_tmp'
-    answers = {}
     converter = ConverterNotebook(filename, tmpf)
     converter.read()
 
     for identifier, answer in request.json:
 
         cell, output = find_identified_cell(converter.nb, identifier)
-        answers[identifier] = {'submitted_answer': answer, 'correct_answer': output.json.correct_answer, 'constructor_info':output.json.constructor_info}
         name, args, kw = output.json.constructor_info
         question = construct_question(name, args, kw)
         if question.checkable:
             data = question.check_answer(answer)
             # would be nice to automatically have this done
+            import sys
+            sys.stderr.write('output before: ' + `output` + '\n')
             output.json = data['application/json']
             output.latex = data['text/latex'].split('\n')
             output.html = data['text/html'].split('\n')
+            sys.stderr.write('html: ' + `output.html` + '\n')
 
         # for debugging:
         import sys
