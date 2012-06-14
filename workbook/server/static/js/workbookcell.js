@@ -6,14 +6,14 @@
 //----------------------------------------------------------------------------
 
 //============================================================================
-// TeacherCell
+// WorkbookCell
 //============================================================================
 
 var IPython = (function (IPython) {
 
     var utils = IPython.utils;
 
-    var TeacherCell = function (notebook) {
+    var WorkbookCell = function (notebook) {
         this.code_mirror = null;
         this.input_prompt_number = null;
         this.is_completing = false;
@@ -27,10 +27,10 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype = new IPython.Cell();
+    WorkbookCell.prototype = new IPython.Cell();
 
 
-    TeacherCell.prototype.create_element = function () {
+    WorkbookCell.prototype.create_element = function () {
         var cell =  $('<div></div>').addClass('cell border-box-sizing code_cell vbox');
         cell.attr('tabindex','2');
         var input = $('<div></div>').addClass('input hbox');
@@ -51,7 +51,7 @@ var IPython = (function (IPython) {
     };
 
     //TODO, try to diminish the number of parameters.
-    TeacherCell.prototype.request_tooltip_after_time = function (pre_cursor,time){
+    WorkbookCell.prototype.request_tooltip_after_time = function (pre_cursor,time){
         var that = this;
         if (pre_cursor === "" || pre_cursor === "(" ) {
             // don't do anything if line beggin with '(' or is empty
@@ -63,7 +63,7 @@ var IPython = (function (IPython) {
         }
     };
 
-    TeacherCell.prototype.handle_codemirror_keyevent = function (editor, event) {
+    WorkbookCell.prototype.handle_codemirror_keyevent = function (editor, event) {
         // This method gets called in CodeMirror's onKeyDown/onKeyPress
         // handlers and is used to provide custom key handling. Its return
         // value is used to determine if CodeMirror should ignore the event:
@@ -75,7 +75,7 @@ var IPython = (function (IPython) {
         
         // note that we are comparing and setting the time to wait at each key press.
         // a better wqy might be to generate a new function on each time change and
-        // assign it to TeacherCell.prototype.request_tooltip_after_time
+        // assign it to WorkbookCell.prototype.request_tooltip_after_time
         tooltip_wait_time = this.notebook.time_before_tooltip;
         tooltip_on_tab    = this.notebook.tooltip_on_tab;
         var that = this;
@@ -170,7 +170,7 @@ var IPython = (function (IPython) {
         return false;
     };
 
-    TeacherCell.prototype.remove_and_cancel_tooltip = function() {
+    WorkbookCell.prototype.remove_and_cancel_tooltip = function() {
         // note that we don't handle closing directly inside the calltip
         // as in the completer, because it is not focusable, so won't
         // get the event.
@@ -181,7 +181,7 @@ var IPython = (function (IPython) {
         }
     }
 
-    TeacherCell.prototype.finish_tooltip = function (reply) {
+    WorkbookCell.prototype.finish_tooltip = function (reply) {
         // Extract call tip data; the priority is call, init, main.
         defstring = reply.call_def;
         if (defstring == null) { defstring = reply.init_definition; }
@@ -264,7 +264,7 @@ var IPython = (function (IPython) {
     };
 
     // As you type completer
-    TeacherCell.prototype.finish_completing = function (matched_text, matches) {
+    WorkbookCell.prototype.finish_completing = function (matched_text, matches) {
         if(matched_text[0]=='%'){
             completing_from_magic = true;
             completing_to_magic = false;
@@ -546,7 +546,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.select = function () {
+    WorkbookCell.prototype.select = function () {
         IPython.Cell.prototype.select.apply(this);
         this.code_mirror.refresh();
         this.code_mirror.focus();
@@ -556,7 +556,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.select_all = function () {
+    WorkbookCell.prototype.select_all = function () {
         var start = {line: 0, ch: 0};
         var nlines = this.code_mirror.lineCount();
         var last_line = this.code_mirror.getLine(nlines-1);
@@ -565,7 +565,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_output = function (json, dynamic) {
+    WorkbookCell.prototype.append_output = function (json, dynamic) {
         // If dynamic is true, javascript output will be eval'd.
         this.expand();
         this.flush_clear_timeout();
@@ -582,14 +582,14 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.create_output_area = function () {
+    WorkbookCell.prototype.create_output_area = function () {
         var oa = $("<div/>").addClass("hbox output_area");
         oa.append($('<div/>').addClass('prompt'));
         return oa;
     };
 
 
-    TeacherCell.prototype.append_pyout = function (json, dynamic) {
+    WorkbookCell.prototype.append_pyout = function (json, dynamic) {
         n = json.prompt_number || ' ';
         var toinsert = this.create_output_area();
         toinsert.find('div.prompt').addClass('output_prompt').html('Out[' + n + ']:');
@@ -602,7 +602,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_pyerr = function (json) {
+    WorkbookCell.prototype.append_pyerr = function (json) {
         var tb = json.traceback;
         if (tb !== undefined && tb.length > 0) {
             var s = '';
@@ -618,7 +618,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_stream = function (json) {
+    WorkbookCell.prototype.append_stream = function (json) {
         // temporary fix: if stream undefined (json file written prior to this patch),
         // default to most likely stdout:
         if (json.stream == undefined){
@@ -650,7 +650,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_display_data = function (json, dynamic) {
+    WorkbookCell.prototype.append_display_data = function (json, dynamic) {
         var toinsert = this.create_output_area();
         this.append_mime_type(json, toinsert, dynamic);
         this.element.find('div.output').append(toinsert);
@@ -661,7 +661,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_mime_type = function (json, element, dynamic) {
+    WorkbookCell.prototype.append_mime_type = function (json, element, dynamic) {
         if (json.javascript !== undefined && dynamic) {
             this.append_javascript(json.javascript, element, dynamic);
         } else if (json.html !== undefined) {
@@ -680,14 +680,14 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_html = function (html, element) {
+    WorkbookCell.prototype.append_html = function (html, element) {
         var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_html rendered_html");
         toinsert.append(html);
         element.append(toinsert);
     };
 
 
-    TeacherCell.prototype.append_javascript = function (js, container) {
+    WorkbookCell.prototype.append_javascript = function (js, container) {
         // We just eval the JS code, element appears in the local scope.
         var element = $("<div/>").addClass("box_flex1 output_subarea");
         container.append(element);
@@ -699,7 +699,7 @@ var IPython = (function (IPython) {
     }
 
 
-    TeacherCell.prototype.append_text = function (data, element, extra_class) {
+    WorkbookCell.prototype.append_text = function (data, element, extra_class) {
         var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_text");
         // escape ANSI & HTML specials in plaintext:
         data = utils.fixConsole(data);
@@ -711,28 +711,28 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.append_svg = function (svg, element) {
+    WorkbookCell.prototype.append_svg = function (svg, element) {
         var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_svg");
         toinsert.append(svg);
         element.append(toinsert);
     };
 
 
-    TeacherCell.prototype.append_png = function (png, element) {
+    WorkbookCell.prototype.append_png = function (png, element) {
         var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_png");
         toinsert.append($("<img/>").attr('src','data:image/png;base64,'+png));
         element.append(toinsert);
     };
 
 
-    TeacherCell.prototype.append_jpeg = function (jpeg, element) {
+    WorkbookCell.prototype.append_jpeg = function (jpeg, element) {
         var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_jpeg");
         toinsert.append($("<img/>").attr('src','data:image/jpeg;base64,'+jpeg));
         element.append(toinsert);
     };
 
 
-    TeacherCell.prototype.append_latex = function (latex, element) {
+    WorkbookCell.prototype.append_latex = function (latex, element) {
         // This method cannot do the typesetting because the latex first has to
         // be on the page.
         var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_latex");
@@ -741,7 +741,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.clear_output = function (stdout, stderr, other) {
+    WorkbookCell.prototype.clear_output = function (stdout, stderr, other) {
         var that = this;
         if (this.clear_out_timeout != null){
             // fire previous pending clear *immediately*
@@ -763,7 +763,7 @@ var IPython = (function (IPython) {
         );
     };
     
-    TeacherCell.prototype.clear_output_callback = function (stdout, stderr, other) {
+    WorkbookCell.prototype.clear_output_callback = function (stdout, stderr, other) {
         var output_div = this.element.find("div.output");
         
         if (stdout && stderr && other){
@@ -802,11 +802,11 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.clear_input = function () {
+    WorkbookCell.prototype.clear_input = function () {
         this.code_mirror.setValue('');
     };
     
-    TeacherCell.prototype.flush_clear_timeout = function() {
+    WorkbookCell.prototype.flush_clear_timeout = function() {
         var output_div = this.element.find('div.output');
         if (this.clear_out_timeout){
             clearTimeout(this.clear_out_timeout);
@@ -816,7 +816,7 @@ var IPython = (function (IPython) {
     }
 
 
-    TeacherCell.prototype.collapse = function () {
+    WorkbookCell.prototype.collapse = function () {
         if (!this.collapsed) {
             this.element.find('div.output').hide();
             this.collapsed = true;
@@ -824,7 +824,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.expand = function () {
+    WorkbookCell.prototype.expand = function () {
         if (this.collapsed) {
             this.element.find('div.output').show();
             this.collapsed = false;
@@ -832,7 +832,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.toggle_output = function () {
+    WorkbookCell.prototype.toggle_output = function () {
         if (this.collapsed) {
             this.expand();
         } else {
@@ -840,24 +840,24 @@ var IPython = (function (IPython) {
         };
     };
 
-    TeacherCell.prototype.set_input_prompt = function (number) {
+    WorkbookCell.prototype.set_input_prompt = function (number) {
         this.input_prompt_number = number;
         var ns = number || "&nbsp;";
         this.element.find('div.input_prompt').html('In&nbsp;[' + ns + ']:');
     };
 
 
-    TeacherCell.prototype.get_text = function () {
+    WorkbookCell.prototype.get_text = function () {
         return this.code_mirror.getValue();
     };
 
 
-    TeacherCell.prototype.set_text = function (code) {
+    WorkbookCell.prototype.set_text = function (code) {
         return this.code_mirror.setValue(code);
     };
 
 
-    TeacherCell.prototype.at_top = function () {
+    WorkbookCell.prototype.at_top = function () {
         var cursor = this.code_mirror.getCursor();
         if (cursor.line === 0) {
             return true;
@@ -867,7 +867,7 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.at_bottom = function () {
+    WorkbookCell.prototype.at_bottom = function () {
         var cursor = this.code_mirror.getCursor();
         if (cursor.line === (this.code_mirror.lineCount()-1)) {
             return true;
@@ -877,8 +877,8 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.fromJSON = function (data) {
-        if (data.cell_type === 'teacher') {
+    WorkbookCell.prototype.fromJSON = function (data) {
+        if (data.cell_type === 'workbook') {
             if (data.input !== undefined) {
                 this.set_text(data.input);
             }
@@ -903,10 +903,10 @@ var IPython = (function (IPython) {
     };
 
 
-    TeacherCell.prototype.toJSON = function () {
+    WorkbookCell.prototype.toJSON = function () {
         var data = {};
         data.input = this.get_text();
-        data.cell_type = 'code'; // Turn the cell back to 'teacher' for saving 
+        data.cell_type = 'code'; // Turn the cell back to 'code' for saving 
         if (this.input_prompt_number) {
             data.prompt_number = this.input_prompt_number;
         };
@@ -922,7 +922,7 @@ var IPython = (function (IPython) {
     };
 
 
-    IPython.TeacherCell = TeacherCell;
+    IPython.WorkbookCell = WorkbookCell;
 
     return IPython;
 }(IPython));

@@ -57,7 +57,8 @@ class AddMetadata(nbc.ConverterNotebook):
 class StudentMetadata(nbc.ConverterNotebook):
     extension = 'json' # the output is not officially .ipynb
     default_output = NotebookNode(output_type='display_data')
-    default_output.json = {'workbook_metadata':{'owner':'student'}}
+    default_output.json = {'workbook_metadata':{'owner':'workbook',
+                                                'user':'student'}}
 
     def render_heading(self, cell):
         output = find_and_merge_metadata(cell) or self.default_output
@@ -89,7 +90,8 @@ class StudentMetadata(nbc.ConverterNotebook):
 
 class TAMetadata(StudentMetadata):
     default_output = NotebookNode(output_type='display_data')
-    default_output.json = {'workbook_metadata':{'owner':'TA'}}
+    default_output.json = {'workbook_metadata':{'owner':'workbook',
+                                                'user':'TA'}}
 
 class RemoveMetadata(nbc.ConverterNotebook):
 

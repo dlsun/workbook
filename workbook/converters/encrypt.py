@@ -44,7 +44,7 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
         output = find_and_merge_metadata(cell)
         if (output is not None and 
             'owner' in output.json['workbook_metadata'].keys() 
-            and output.json['workbook_metadata']['owner'] == 'teacher'):
+            and output.json['workbook_metadata']['owner'] == 'workbook'):
             cell.input = self.cipher.encrypt(cell.input)
             for output in cell.outputs:
                 # don't encrypt the metadata
@@ -69,7 +69,7 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
         output = find_and_merge_metadata(cell)
         if (output is not None and 
             'owner' in output.json['workbook_metadata'].keys()
-            and output.json['workbook_metadata']['owner'] == 'teacher'):
+            and output.json['workbook_metadata']['owner'] == 'workbook'):
             cell.input = self.cipher.decrypt(cell.input)
             for output in cell.outputs:
                 # don't encrypt the metadata

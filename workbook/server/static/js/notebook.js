@@ -536,8 +536,8 @@ var IPython = (function (IPython) {
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
                 cell = new IPython.MarkdownCell(this);
-            } else if (type === 'teacher') {
-                cell = new IPython.TeacherCell(this);
+            } else if (type === 'workbook') {
+                cell = new IPython.WorkbookCell(this);
 		cell.read_only = true;
             } else if (type === 'html') {
                 cell = new IPython.HTMLCell(this);
@@ -1229,10 +1229,10 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
-                if (cell_data.owner === 'teacher'){
-                    cell_data.cell_type = 'teacher';
+                if (cell_data.owner == 'workbook'){
+                    cell_data.cell_type = 'workbook';
                 }
-                
+
                 new_cell = this.insert_cell_below(cell_data.cell_type);
                 new_cell.fromJSON(cell_data);
             };
