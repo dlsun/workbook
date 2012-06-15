@@ -1,0 +1,94 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>IPython Dashboard</title>
+<link rel="stylesheet" href="/static/jquery/css/themes/base/jquery-ui.min.css?v=d1a93" type="text/css" />
+<link rel="stylesheet" href="/static/css/boilerplate.css?v=befd7" type="text/css" />
+<link rel="stylesheet" href="/static/css/fbm.css?v=34be8" type="text/css" />
+<link rel="stylesheet" href="/static/css/page.css?v=4c306" type="text/css"/>
+
+<link rel="stylesheet" href="/static/css/projectdashboard.css?v=87030" type="text/css" />
+
+</head>
+<body 
+data-project=/home/dennis/Desktop/workbook/notebooks/dlsun
+data-base-project-url=/
+data-base-kernel-url=/
+data-read-only=False
+>
+<div id="header" class="border-box-sizing ui-widget ui-widget-content" style="border-top-style: none; border-left-style: none; border-right-style: none; display: block; ">
+<span id="ipython_notebook"><h1><a href=/ alt='dashboard'><img src='/static/ipynblogo.png?v=5892b' alt='IPython Notebook'/></a></h1></span>
+
+<span id="login_widget">
+
+</span>
+
+</div>
+
+<div id="site" class="border-box-sizing" style="display: block; ">
+
+<div id="main_app" class="border-box-sizing ui-widget">
+<div id="tabs" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
+<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all">
+<li class="ui-state-default ui-corner-top ui-tabs-active ui-state-active"><a href="#tab1">Notebooks</a></li>
+<li class="ui-state-default ui-corner-top"><a href="#tab2">Gradebook</a></li>
+</ul>
+
+<div id="tab1" class="ui-tabs-panel ui-widget-content ui-corner-bottom" style="display: block; ">
+<!--<div id="notebook_toolbar">
+<span id="drag_info">Drag files onto the list to import
+notebooks.</span>
+<span id="notebook_buttons">
+<button id="refresh_notebook_list" title="Refresh notebook list">Refresh</button>
+<button id="new_notebook" title="Create new notebook">New Notebook</button>
+</span>
+</div>!-->
+<div id="notebook_list">
+<div id="project_name" class="list_header ui-widget ui-widget-header">
+  <h2>Homeworks for {{ user.name }}</h2>
+</div>
+{% for nb in nbs %}
+<div class="list_item ui-widget ui-widget-content ui-helper-clearfix" style="border-top-style: none; ">
+  <span class="item_name">
+    <a href='hw/{{ nb_files[loop.index0][:-6] }}' target="_blank">{{ nb.metadata.name }}</a>
+  </span>
+</div>
+{% endfor %}
+</div>
+
+</div>
+
+<div id="tab2" class="ui-tabs-panel ui-widget-content ui-corner-bottom" style="display: none; ">
+<div id="cluster_toolbar" class="list_toolbar">
+<span id="cluster_list_info" class="toolbar_info">IPython parallel computing clusters</span>
+<span id="cluster_buttons" class="toolbar_buttons">
+<button id="refresh_cluster_list" title="Refresh cluster list" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" role="button" aria-disabled="false"><span class="ui-button-icon-primary ui-icon ui-icon-arrowrefresh-1-s"></span><span class="ui-button-text">Refresh</span></button>
+</span>
+</div>
+<div id="cluster_list">
+<div id="cluster_header" class="list_header ui-widget ui-widget-header ui-helper-clearfix">
+<span class="profile_col">profile</span>
+<span class="action_col">action</span>
+<span title="Enter the number of engines to start or empty for default" class="engines_col"># of engines</span>
+<span class="status_col">status</span>
+</div>
+<div class="list_item ui-widget ui-widget-content ui-helper-clearfix" style="border-top-style: none; "><span class="profile_col">default</span><span class="action_col"><button class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false"><span class="ui-button-text">Start</span></button></span><span class="engines_col"><input type="text" size="3" class="engine_num_input"></span><span class="status_col">stopped</span></div></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<script src="/static/jquery/js/jquery-1.7.1.min.js?v=ddb84" type="text/javascript" charset="utf-8"></script>
+<script src="/static/jquery/js/jquery-ui.min.js?v=9fc86" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/namespace.js?v=9e4e0" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/page.js?v=d306b" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/loginwidget.js?v=cd12c" type="text/javascript" charset="utf-8"></script>
+
+<script src="/static/js/notebooklist.js?v=ffa0b" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/clusterlist.js?v=da6d3" type="text/javascript" charset="utf-8"></script>
+<!--<script src="/static/js/projectdashboardmain.js?v=64f33" type="text/javascript" charset="utf-8"></script>!-->
+
+</body>
+</html>

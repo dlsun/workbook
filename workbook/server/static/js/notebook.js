@@ -62,6 +62,7 @@ var IPython = (function (IPython) {
 
 
     Notebook.prototype.bind_events = function () {
+
         var that = this;
         $(document).keydown(function (event) {
             // console.log(event);
@@ -98,6 +99,10 @@ var IPython = (function (IPython) {
                 return false;
             } else if (event.which === 77 && event.ctrlKey && that.control_key_active == false) {
                 that.control_key_active = true;
+                return false;
+            } else if (event.which === 67 && event.shiftKey) {
+		// Shift-c
+                that.check_selected_cell();
                 return false;
             } else if (event.which === 88 && that.control_key_active) {
                 // Cut selected cell = x
@@ -508,11 +513,16 @@ var IPython = (function (IPython) {
         var i = this.index_or_selected(index);
         if (this.is_valid_cell_index(i)) {
             var ce = this.get_cell_element(i);
+	    var cell = this.get_cell(i);
+	    if (cell.cell_type != "workbook") { 
             ce.remove();
             if (i === (this.ncells())) {
                 this.select(i-1);
             } else {
                 this.select(i);
+            };
+	    } else {
+		alert("Cell cannot be deleted.")		
             };
             this.dirty = true;
         };
@@ -531,6 +541,9 @@ var IPython = (function (IPython) {
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
                 cell = new IPython.MarkdownCell(this);
+            } else if (type === 'workbook') {
+                cell = new IPython.WorkbookCell(this);
+		cell.read_only = true;
             } else if (type === 'html') {
                 cell = new IPython.HTMLCell(this);
             } else if (type === 'raw') {
@@ -593,7 +606,8 @@ var IPython = (function (IPython) {
         if (this.is_valid_cell_index(i)) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
-            if (!(source_cell instanceof IPython.CodeCell)) {
+            if (!(source_cell instanceof IPython.CodeCell) &&
+		!(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('code',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -612,7 +626,8 @@ var IPython = (function (IPython) {
         if (this.is_valid_cell_index(i)) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
-            if (!(source_cell instanceof IPython.MarkdownCell)) {
+	    if (!(source_cell instanceof IPython.MarkdownCell)  
+		&& !(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('markdown',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -623,7 +638,7 @@ var IPython = (function (IPython) {
                 target_cell.set_text(text);
                 source_element.remove();
                 this.dirty = true;
-            };
+	    };
         };
     };
 
@@ -634,7 +649,8 @@ var IPython = (function (IPython) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
             var target_cell = null;
-            if (!(source_cell instanceof IPython.HTMLCell)) {
+	    if (!(source_cell instanceof IPython.HTMLCell)  
+		&& !(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('html',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -656,7 +672,8 @@ var IPython = (function (IPython) {
             var source_element = this.get_cell_element(i);
             var source_cell = source_element.data("cell");
             var target_cell = null;
-            if (!(source_cell instanceof IPython.RawCell)) {
+	    if (!(source_cell instanceof IPython.RawCell)  
+		&& !(source_cell.read_only)) {
                 target_cell = this.insert_cell_below('raw',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -681,7 +698,7 @@ var IPython = (function (IPython) {
             var target_cell = null;
             if (source_cell instanceof IPython.HeadingCell) {
                 source_cell.set_level(level);
-            } else {
+            } else if (!source_cell.read_only) {
                 target_cell = this.insert_cell_below('heading',i);
                 var text = source_cell.get_text();
                 if (text === source_cell.placeholder) {
@@ -699,6 +716,7 @@ var IPython = (function (IPython) {
             );
         };
     };
+
 
 
     // Cut/Copy/Paste
@@ -1216,6 +1234,10 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
+                if (cell_data.owner == 'workbook'){
+                    cell_data.cell_type = 'workbook';
+                }
+
                 new_cell = this.insert_cell_below(cell_data.cell_type);
                 new_cell.fromJSON(cell_data);
             };
@@ -1260,10 +1282,92 @@ var IPython = (function (IPython) {
         $.ajax(url, settings);
     };
 
+    Notebook.prototype.check_notebook = function () {
+	var that = this;
+	found_forms = document.forms; 
+	forms = [];
+	for (i=0; i < found_forms.length; i++) {
+            forms[i] = [found_forms[i].name, found_forms[i].value];
+        }
+	data = forms;
+	    // We do the call with settings so we can set cache to false.
+	    var settings = {
+		processData : false,
+		cache : false,
+		type : "POST",
+		data : JSON.stringify(data),
+		headers : {'Content-Type': 'application/json'},
+		contentType: 'application/json;charset=UTF-8', // added by Dennis
+//  		success : $.proxy(this.load_notebook_success,this),
+//  		error : $.proxy(this.load_notebook_error,this)
+	    };
+	    var url = '/hw/' + nb  + '/check'
+		$.ajax(url, settings);
+
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "GET",
+            dataType : "json",
+            success : $.proxy(this.load_notebook_success,this),
+            error : $.proxy(this.load_notebook_error,this),
+        };
+        $([IPython.events]).trigger('notebook_loading.Notebook');
+        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
+	var url = '/hw/' + nb  + '/load'
+        $.ajax(url, settings);
+
+    };
+
+    Notebook.prototype.check_selected_cell = function () {
+        var that = this;
+        var cell = that.get_selected_cell();
+	output_div = cell.element.find('div.output');
+	found_forms = output_div.find('form'); //getElementsByTagName('form');
+	forms = [];
+	for (i=0; i < found_forms.length; i++) {
+            forms[i] = [found_forms[i].name, found_forms[i].value];
+        }
+	data = forms;
+	    // We do the call with settings so we can set cache to false.
+	    var settings = {
+		processData : false,
+		cache : false,
+		type : "POST",
+		data : JSON.stringify(data),
+		headers : {'Content-Type': 'application/json'},
+		contentType: 'application/json;charset=UTF-8', // added by Dennis
+ 		success : $.proxy(this.load_notebook_success,this),
+ 		error : $.proxy(this.load_notebook_error,this)
+	    };
+	    var url = '/hw/' + nb  + '/check'
+		$.ajax(url, settings);
+
+
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "GET",
+            dataType : "json",
+            success : $.proxy(this.load_notebook_success,this),
+            error : $.proxy(this.load_notebook_error,this),
+        };
+        $([IPython.events]).trigger('notebook_loading.Notebook');
+        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
+	var url = '/hw/' + nb  + '/load'
+        $.ajax(url, settings);
+
+    };
+
 
     Notebook.prototype.save_notebook_success = function (data, status, xhr) {
         this.dirty = false;
         $([IPython.events]).trigger('notebook_saved.Notebook');
+
+	// add a handler to all forms
+	$('input').live('change', function() {
+		this.form.value = this.value;
+	});
     };
 
 
@@ -1298,11 +1402,19 @@ var IPython = (function (IPython) {
             this.insert_cell_below('code');
         };
         this.dirty = false;
-        if (! this.read_only) {
+// don't start the kernel... -Dennis
+/*        if (! this.read_only) {
             this.start_kernel();
         }
-        this.select(0);
+*/        this.select(0);
         this.scroll_to_top();
+
+	// add a handler to all forms
+	$('input').live('change', function() {
+		this.form.value = this.value;
+	});
+
+
         if (data.orig_nbformat !== undefined && data.nbformat !== data.orig_nbformat) {
             msg = "This notebook has been converted from an older " +
             "notebook format (v"+data.orig_nbformat+") to the current notebook " +
