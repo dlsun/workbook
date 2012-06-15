@@ -7,62 +7,14 @@ Usage: `ipnbdoctest.py foo.ipynb [bar.ipynb [...]]`
 Each cell is submitted to the kernel, and the outputs are compared with those stored in the notebook.
 """
 
-import os,sys,time
-import base64
-import re
+import os, sys, uuid
 
-from collections import defaultdict
 from Queue import Empty
 
 from IPython.zmq.blockingkernelmanager import BlockingKernelManager
 from IPython.nbformat.current import reads, NotebookNode
 
-import sys, os
-from ..external.nbconvert import ConverterNotebook
-
-def compare_png(a64, b64):
-    """compare two b64 PNGs (incomplete)"""
-    try:
-        import Image
-    except ImportError:
-        pass
-    adata = base64.decodestring(a64)
-    bdata = base64.decodestring(b64)
-    return True
-
-def sanitize(s):
-    """sanitize a string for comparison.
-    
-    fix universal newlines, strip trailing newlines, and normalize likely random values (memory addresses and UUIDs)
-    """
-    # normalize newline:
-    s = s.replace('\r\n', '\n')
-    
-    # ignore trailing newlines (but not space)
-    s = s.rstrip('\n')
-    
-    # normalize hex addresses:
-    s = re.sub(r'0x[a-f0-9]+', '0xFFFFFFFF', s)
-    
-    # normalize UUIDs:
-    s = re.sub(r'[a-f0-9]{8}(\-[a-f0-9]{4}){3}\-[a-f0-9]{12}', 'U-U-I-D', s)
-    
-    return s
-
-
-def compare_outputs(test, ref, skip_compare=('png', 'traceback', 'latex', 'prompt_number')):
-    for key in ref:
-        if key not in test:
-            print "missing key: %s != %s" % (test.keys(), ref.keys())
-            return False
-        elif key not in skip_compare and sanitize(test[key]) != sanitize(ref[key]):
-            print "mismatch %s:" % key
-            print test[key]
-            print '  !=  '
-            print ref[key]
-            return False
-    return True
-
+from workbook.external.nbconvert import ConverterNotebook
 
 def run_cell(km, cell):
     shell = km.shell_channel
@@ -113,10 +65,12 @@ def run_cell(km, cell):
     return outs
     
 
+km = BlockingKernelManager()
+km.session.key = uuid.uuid4()
+km.start_kernel(extra_arguments=['--pylab=inline'], stderr=open(os.devnull, 'w'))
+km.start_channels()
+
 def execute_notebook(nb):
-    km = BlockingKernelManager()
-    km.start_kernel(extra_arguments=['--pylab=inline'], stderr=open(os.devnull, 'w'))
-    km.start_channels()
     # run %pylab inline, because some notebooks assume this
     # even though they shouldn't
     km.shell_channel.execute("pass")
@@ -145,8 +99,8 @@ def execute_notebook(nb):
                 continue
             cell.outputs = outs
             prompt_number += 1
-    km.shutdown_kernel()
-    del km
+    # km.shutdown_kernel()
+    # del km
 
 def execute_and_save(ipynb):
     converter = ConverterNotebook(ipynb, os.path.splitext(ipynb)[0] + '_executed')
