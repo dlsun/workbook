@@ -104,20 +104,27 @@ class MultipleChoice(object):
                 data.update(d)
             return data
 
+    # def check_answer(self, output, answer):
+    #     self.answer = answer
+    #     data = self.publish(return_data=True, display=False)
+    #     if self.answer == self.correct_answer:
+    #         if "html" in output.keys():
+    #             output.html = data['text/html'].split('\n')
+    #             output.html.append('\n<p><h2>Good job!</h2></p>\n')
+    #     elif self.answer:
+    #         if "html" in output.keys():
+    #             output.html = data['text/html'].split('\n')
+    #             output.html.append('\n<p><h2>Try again!</h2></p>\n')
+
+    #     if "latex" in output.keys():
+    #         output.latex = data['text/latex'].split('\n')
+
     def check_answer(self, output, answer):
         self.answer = answer
-        data = self.publish(return_data=True, display=False)
         if self.answer == self.correct_answer:
-            if "html" in output.keys():
-                output.html = data['text/html'].split('\n')
-                output.html.append('\n<p><h2>Good job!</h2></p>\n')
-        elif self.answer:
-            if "html" in output.keys():
-                output.html = data['text/html'].split('\n')
-                output.html.append('\n<p><h2>Try again!</h2></p>\n')
-
-        if "latex" in output.keys():
-            output.latex = data['text/latex'].split('\n')
+            return { 'points' : 5 , 'comments': 'Great job!' }
+        else:
+            return { 'points' : 0 , 'comments': 'Try again!' }
                 
     def get_answer(self):
         return self.selected

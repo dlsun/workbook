@@ -176,11 +176,28 @@ def check_nb(nbname):
     nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)
 
+# check a specific question in the notebook
+@app.route('/hw/<nbname>/check/<question_id>', methods=['GET','POST'])
+def check_nb_question(nbname,question_id):
+    global counter
+    user = check_user(request)
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+
+    try:
+        identifier = request.json['name']
+        answer = request.json['value']
+        out = check_answer(filename, identifier, answer)
+        return json.dumps(out)
+    except Exception, err:
+        import sys
+        sys.stderr.write('ERROR: %s\n' % str(err))
+        return json.dumps({'comments': 'Error!'})
+
 # start server
 
 def main():
     update_question_types()
-    app.run(debug=True,host='0.0.0.0', use_reloader=False, use_debugger=True)
+    app.run(debug=True,host='0.0.0.0', use_reloader=True, use_debugger=True)
     #app.run(debug=False,host='0.0.0.0')
 
 if __name__ == "__main__":
