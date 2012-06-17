@@ -1270,36 +1270,36 @@ var IPython = (function (IPython) {
     };
 
     Notebook.prototype.check_cell = function (cell) {
-        //var cell = this.get_selected_cell();
-	// take only the first form if there are more than one
 	form = cell.element.find('form')[0];
-	data = { name : form.name, value : form.value };
-	    // We do the call with settings so we can set cache to false.
-	    var settings = {
-		processData : false,
-		cache : false,
-		type : "POST",
-		data : JSON.stringify(data),
-		headers : {'Content-Type': 'application/json'},
-		dataType : "json", // output data
-		contentType: 'application/json;charset=UTF-8', // added by Dennis
- 		success : $.proxy(this.check_cell_success,this),
- 		error : $.proxy(this.check_cell_error,this)
-	    };
-	    var url = '/hw/' + nb  + '/check/' + data.name
+	if(form !== undefined) {
+	    if(form.value !== undefined) {
+		data = { name : form.name, value : form.value };
+		// We do the call with settings so we can set cache to false.
+		var settings = {
+		    processData : false,
+		    cache : false,
+		    type : "POST",
+		    data : JSON.stringify(data),
+		    headers : {'Content-Type': 'application/json'},
+		    dataType : "json", // output data
+		    contentType: 'application/json;charset=UTF-8', // added by Dennis
+ 		    success : $.proxy(this.check_cell_success,cell),
+ 		    error : $.proxy(this.check_cell_error,this)
+		};
+		var url = '/hw/' + nb  + '/check/' + data.name
 		$.ajax(url, settings);
+	    }
+	}
     };
 
     Notebook.prototype.check_cell_success = function(out_data) {
-	// right now it's taking the selected cell -- this is wrong, cell should be passed in context
-	var selected_cell = this.get_selected_cell();
 	var output = {
 	    output_type : 'display_data',
-	    comments : '<h2>' + out_data.comments + '</h2>' 
+	    comments : '<h2>' + out_data.comments + '</h2>' // eventually this will just be plaintext and CSS takes care of formatting
 	};
 	// remove any existing comments and add current comments
-	selected_cell.delete_comments();
-	selected_cell.append_output(output, false);
+	this.delete_comments();
+	this.append_output(output, false);
     }
 
     Notebook.prototype.check_cell_error = function (xhr, status, error_msg) {

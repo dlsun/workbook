@@ -696,7 +696,7 @@ var IPython = (function (IPython) {
     };
 
     WorkbookCell.prototype.delete_comments = function () {
-	$("div.comments").parent("div.output_area").remove();
+	this.element.find("div.comments").parent("div.output_area").remove();
     }
 
 
