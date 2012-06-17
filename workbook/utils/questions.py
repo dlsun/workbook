@@ -312,7 +312,6 @@ question_types = {'multiple_choice':MultipleChoice,
                   'normal_mean':NormalMean}
 
 def register_question_type(name, constructor):
-    import sys
     question_types[name] = constructor
 
 def construct_question(name, args, keyword_args):

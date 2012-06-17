@@ -33,13 +33,7 @@ def find_question_types():
 def update_question_types():
     question_types.update(find_question_types())
 
-question_types_already_found = False
 def check_answer(filename, identifier, answer):
-#     global question_types_already_found
-#     if not question_types_already_found:
-#         update_question_types()
-#         question_types_already_found = True
-
     tmpf = os.path.splitext(filename)[0] + '_tmp'
     converter = ConverterNotebook(filename, tmpf)
     converter.read()

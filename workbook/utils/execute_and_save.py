@@ -16,12 +16,10 @@ from IPython.nbformat.current import reads, NotebookNode
 
 from workbook.external.nbconvert import ConverterNotebook
 
-def run_cell(km, cell):
-    shell = km.shell_channel
-    iopub = km.sub_channel
+def run_cell(cell_input):
     # print "\n\ntesting:"
     # print cell.input
-    shell.execute(cell.input)
+    shell.execute(cell_input)
     # wait for finish, maximum 20s
     shell.get_msg(timeout=20)
     outs = []
@@ -69,6 +67,8 @@ km = BlockingKernelManager()
 km.session.key = uuid.uuid4()
 km.start_kernel(extra_arguments=['--pylab=inline'], stderr=open(os.devnull, 'w'))
 km.start_channels()
+shell = km.shell_channel
+iopub = km.sub_channel
 
 def execute_notebook(nb):
     # run %pylab inline, because some notebooks assume this
@@ -91,7 +91,7 @@ def execute_notebook(nb):
             if cell.cell_type != 'code':
                 continue
             try:
-                outs = run_cell(km, cell)
+                outs = run_cell(cell.input)
             except Exception as e:
                 print "failed to run cell:", repr(e)
                 print cell.input
