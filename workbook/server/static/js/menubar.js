@@ -122,7 +122,7 @@ var IPython = (function (IPython) {
             IPython.notebook.execute_selected_cell();
         });
         this.element.find('#check_cell').click(function () {
-            IPython.notebook.check_selected_cell();
+            IPython.notebook.check_cell();
         });
         this.element.find('#run_cell_in_place').click(function () {
             IPython.notebook.execute_selected_cell({terminal:true});
