@@ -3,8 +3,6 @@ import os, shutil, glob, json, tempfile
 
 from IPython.nbformat import current as nbformat
 
-
-
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata)
 from workbook.converters import compose_converters
@@ -88,7 +86,6 @@ def generate_student(user):
 def generate_assignment(hwtemplate, user):
     folder = user_folder(user)
     outfile = create_assignment(hwtemplate, os.path.join(folder, 'student_info.json'))
-    # shutil.copy(outfile, folder)
 
 def set_student_cipher(user):
 
@@ -99,10 +96,10 @@ def set_student_cipher(user):
     user['cipher'] = Cipher(key, iv)
 
 # load the notebook page
-@app.route('/hw/<nb>')
-def hw(nb):
+@app.route('/hw/<nbname>')
+def hw(nbname):
     user = check_user(request)
-    return render_template('homework.html',nb = nb)
+    return render_template('homework.html',nb = nbname)
 
 def forward(nb, filename, user, nbname):
     """
@@ -143,7 +140,7 @@ def reverse(nb, filename, user, nbname):
 def load_nb(nbname):
     global counter
     user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+    filename = os.path.join(user_folder(user), nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
     nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)
@@ -153,28 +150,11 @@ def load_nb(nbname):
 def save_nb(nbname):
     global counter
     user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname+".ipynb")
+    filename = os.path.join(user_folder(user), nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
     nb = reverse(nb, filename, user, nbname)
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
-
-# load the JSON file of the notebook
-@app.route('/hw/<nbname>/check', methods=['GET', 'POST'])
-def check_nb(nbname):
-    global counter
-    user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
-    
-    for identifier, answer in request.json:
-        outfile = check_answer(filename, identifier, answer)
-
-    # this should be reduntant now
-    os.rename(outfile, filename)
-
-    nb = nbformat.read(open(filename, 'rb'), 'json')
-    nb = forward(nb, filename, user, nbname)
-    return json.dumps(nb)
 
 # check a specific question in the notebook
 @app.route('/hw/<nbname>/check/<question_id>', methods=['GET','POST'])

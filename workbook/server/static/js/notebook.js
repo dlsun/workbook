@@ -102,7 +102,7 @@ var IPython = (function (IPython) {
                 return false;
             } else if (event.which === 67 && event.shiftKey) {
 		// Shift-c
-                that.check_selected_cell();
+                that.check_cell(that.get_selected_cell());
                 return false;
             } else if (event.which === 88 && that.control_key_active) {
                 // Cut selected cell = x
@@ -1260,87 +1260,17 @@ var IPython = (function (IPython) {
         return data;
     };
 
+    // should checking the entire notebook be an option at all?
     Notebook.prototype.check_notebook = function () {
-	var that = this;
-	found_forms = document.forms; 
-	forms = [];
-	for (i=0; i < found_forms.length; i++) {
-            forms[i] = [found_forms[i].name, found_forms[i].value];
-        }
-	data = forms;
-	    // We do the call with settings so we can set cache to false.
-	    var settings = {
-		processData : false,
-		cache : false,
-		type : "POST",
-		data : JSON.stringify(data),
-		headers : {'Content-Type': 'application/json'},
-		contentType: 'application/json;charset=UTF-8', // added by Dennis
-//  		success : $.proxy(this.load_notebook_success,this),
-//  		error : $.proxy(this.load_notebook_error,this)
-	    };
-	    var url = '/hw/' + nb  + '/check'
-		$.ajax(url, settings);
-
-        var settings = {
-            processData : false,
-            cache : false,
-            type : "GET",
-            dataType : "json",
-            success : $.proxy(this.load_notebook_success,this),
-            error : $.proxy(this.load_notebook_error,this),
-        };
-        $([IPython.events]).trigger('notebook_loading.Notebook');
-        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
-	var url = '/hw/' + nb  + '/load'
-        $.ajax(url, settings);
-
+	var cells = this.get_cells();
+	var ncells = cells.length;
+	for (var i=0; i<ncells; i++) {
+	    this.check_cell(cells[i])
+	}
     };
 
-/*
-    Notebook.prototype.check_selected_cell = function () {
-        var that = this;
-        var cell = that.get_selected_cell();
-	output_div = cell.element.find('div.output');
-	found_forms = output_div.find('form'); //getElementsByTagName('form');
-	forms = [];
-	for (i=0; i < found_forms.length; i++) {
-            forms[i] = [found_forms[i].name, found_forms[i].value];
-        }
-	data = forms;
-	    // We do the call with settings so we can set cache to false.
-	    var settings = {
-		processData : false,
-		cache : false,
-		type : "POST",
-		data : JSON.stringify(data),
-		headers : {'Content-Type': 'application/json'},
-		contentType: 'application/json;charset=UTF-8', // added by Dennis
- 		success : $.proxy(this.load_notebook_success,this),
- 		error : $.proxy(this.load_notebook_error,this)
-	    };
-	    var url = '/hw/' + nb  + '/check'
-		$.ajax(url, settings);
-
-
-        var settings = {
-            processData : false,
-            cache : false,
-            type : "GET",
-            dataType : "json",
-            success : $.proxy(this.load_notebook_success,this),
-            error : $.proxy(this.load_notebook_error,this),
-        };
-        $([IPython.events]).trigger('notebook_loading.Notebook');
-        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
-	var url = '/hw/' + nb  + '/load'
-        $.ajax(url, settings);
-
-    };
-*/
-
-    Notebook.prototype.check_selected_cell = function () {
-        var cell = this.get_selected_cell();
+    Notebook.prototype.check_cell = function (cell) {
+        //var cell = this.get_selected_cell();
 	// take only the first form if there are more than one
 	form = cell.element.find('form')[0];
 	data = { name : form.name, value : form.value };
@@ -1353,26 +1283,26 @@ var IPython = (function (IPython) {
 		headers : {'Content-Type': 'application/json'},
 		dataType : "json", // output data
 		contentType: 'application/json;charset=UTF-8', // added by Dennis
- 		success : $.proxy(this.check_selected_cell_success,this),
- 		error : $.proxy(this.check_notebook_error,this)
+ 		success : $.proxy(this.check_cell_success,this),
+ 		error : $.proxy(this.check_cell_error,this)
 	    };
 	    var url = '/hw/' + nb  + '/check/' + data.name
 		$.ajax(url, settings);
     };
 
-    Notebook.prototype.check_selected_cell_success = function(out_data) {
-	var new_cell = new IPython.MarkdownCell(this);
-	var selected_cell = this.get_selected_cell().element;
-	// we should really pass the selected cell in the callback, but this will do for now
-	new_cell.set_text('<h2>' + out_data.comments + '</h2>');
-	// this is a hack, and a really bad solution!
-	// tries to determine whether there already is a comment based on whether next cell is a text cell
-	if(!$.isEmptyObject(selected_cell.next('.text_cell'))) selected_cell.next().remove();
-	selected_cell.after(new_cell.element);
-	new_cell.render();
+    Notebook.prototype.check_cell_success = function(out_data) {
+	// right now it's taking the selected cell -- this is wrong, cell should be passed in context
+	var selected_cell = this.get_selected_cell();
+	var output = {
+	    output_type : 'display_data',
+	    comments : '<h2>' + out_data.comments + '</h2>' 
+	};
+	// remove any existing comments and add current comments
+	selected_cell.delete_comments();
+	selected_cell.append_output(output, false);
     }
 
-    Notebook.prototype.check_selected_cell_error = function (xhr, status, error_msg) {
+    Notebook.prototype.check_cell_error = function (xhr, status, error_msg) {
 	window.alert(error_msg);
         $([IPython.events]).trigger('notebook_save_failed.Notebook');
     };
@@ -1442,11 +1372,11 @@ var IPython = (function (IPython) {
             this.insert_cell_below('code');
         };
         this.dirty = false;
-// don't start the kernel... -Dennis
-/*        if (! this.read_only) {
+/* don't start the kernel...it won't do anything anyway
+        if (! this.read_only) {
             this.start_kernel();
-        }
-*/        this.select(0);
+        } */
+        this.select(0);
         this.scroll_to_top();
 
 	// add a handler to all forms

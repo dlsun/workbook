@@ -8,7 +8,6 @@ import glob
 from .execute_and_save import execute_and_save
 from ..converters import encrypt, sync_metadata_name, AddMetadata
 from ..external import nbconvert as nbc
-
 from workbook.io import *
 
 def merge_notebooks(outbase, *notebooks):
@@ -28,7 +27,7 @@ def create_assignment(assignmentfile, student_info):
     student_info = json.load(file(student_info, 'rb'))
     student_id = student_info['id']
 
-    # make output directory
+# make output directory
 
     odir = os.path.join(PATH_TO_HW_FILES, student_id)
     if not os.path.exists(odir):
@@ -40,6 +39,7 @@ def create_assignment(assignmentfile, student_info):
     # inject the seed as the first line of the first code cell
     # should be a neater way to do this
     nb = nbc.nbformat.read(open(outfile, 'rb'), 'json')
+    # it doesn't seem like inserted_seed is doing anything -Dennis
     inserted_seed = False
     for ws in nb.worksheets:
         if not inserted_seed:
@@ -54,11 +54,13 @@ def create_assignment(assignmentfile, student_info):
     os.rename(newfile, outfile)
     converter = AddMetadata(outfile, os.path.splitext(outfile)[0] + '_tmp',
                             {'owner':'workbook',
-                             'user':'teacher',
-                             'color':'blue'})
+                             'user':'teacher'})
     newfile = converter.render()
     os.rename(newfile, outfile)
+
+    # do we really need this metadata? -Dennis
     sync_metadata_name(outfile)
+
     return outfile
 
 

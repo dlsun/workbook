@@ -5,7 +5,6 @@ from workbook.converters import ConverterNotebook
 import IPython.nbformat.current as nbformat
 from workbook.utils.questions import (find_identified_cells,
                                       find_identified_outputs,
-                                      update_output,
                                       question_types,
                                       construct_question)
 from workbook.io import *

@@ -46,8 +46,8 @@ class MultipleChoice(object):
 
     checkable = True
 
-    def __init__(self, identifier, question_text, choices, correct_answer,
-                 assignment='assignment1', selected=None):
+    def __init__(self, identifier, question_text, choices, correct_answer, selected=None):
+#                 assignment='assignment1', selected=None):
 
         if correct_answer not in list(choices):
             raise ValueError('the correct answer should be one of the choices! %s' % `(correct_answer, choices)`)
@@ -58,24 +58,19 @@ class MultipleChoice(object):
         self.selected = selected
         self.question_text = question_text
         self.correct_answer = correct_answer
-        # assignment should be removed
-        self.assignment = assignment
         self.identifier = identifier
 
     @property
     def constructor_info(self):
         args = [self.identifier, self.question_text, self.choices, self.correct_answer]
-        kw = {'assignment':self.assignment,
-              'selected':self.selected}
+        kw = {'selected':self.selected}
         return ('multiple_choice', args, kw)
 
     def publish(self, return_data=False, display=True):
 
         latex_data = {'text/latex':self.question_text}
 
-        d = {'identifier': self.identifier,
-             'url': self.assignment}
-
+        d = {'identifier': self.identifier }
         buttons = []
         for choice in self.choices:
             d['value'] = choice
@@ -91,7 +86,6 @@ class MultipleChoice(object):
 
         if display:
             # this update puts the question identifier info in this output
-
             latex_data.update(json_data)
             publish_display_data("HomeworkBuilder", latex_data)
 
@@ -103,21 +97,6 @@ class MultipleChoice(object):
             for d in [latex_data, html_data, json_data]:
                 data.update(d)
             return data
-
-    # def check_answer(self, output, answer):
-    #     self.answer = answer
-    #     data = self.publish(return_data=True, display=False)
-    #     if self.answer == self.correct_answer:
-    #         if "html" in output.keys():
-    #             output.html = data['text/html'].split('\n')
-    #             output.html.append('\n<p><h2>Good job!</h2></p>\n')
-    #     elif self.answer:
-    #         if "html" in output.keys():
-    #             output.html = data['text/html'].split('\n')
-    #             output.html.append('\n<p><h2>Try again!</h2></p>\n')
-
-    #     if "latex" in output.keys():
-    #         output.latex = data['text/latex'].split('\n')
 
     def check_answer(self, output, answer):
         self.answer = answer
@@ -141,36 +120,30 @@ class TrueFalse(MultipleChoice):
 
     checkable = True
 
-    def __init__(self, identifier, question_text, correct_answer, 
-                 assignment='assignment1', selected=None):
+    def __init__(self, identifier, question_text, correct_answer, selected=None):
         MultipleChoice.__init__(self, identifier, question_text, ['True', 'False'],
-                                str(correct_answer), assignment=assignment,
-                                selected=selected)
+                                str(correct_answer), selected=selected)
 
     @property
     def constructor_info(self):
         args = [self.identifier, self.question_text, self.correct_answer]
-        kw = {'assignment':self.assignment,
-              'selected':self.selected}
+        kw = {'selected':self.selected}
         return ('true_false', args, kw)
 
 class TextBox(MultipleChoice):
 
     checkable = True
 
-    def __init__(self, identifier, question_text, correct_answer=None, 
-                 assignment='assignment1', answer=''):
+    def __init__(self, identifier, question_text, correct_answer=None, answer=''):
         self.identifier = identifier
         self.question_text = question_text
         self.correct_answer = correct_answer
-        self.assignment = assignment
         self.answer = answer
 
     @property
     def constructor_info(self):
         args = [self.identifier, self.question_text]
         kw = {'correct_answer':self.correct_answer,
-              'assignment':self.assignment,
               'answer':self.answer}
         return ('textbox', args, kw)
 
@@ -178,7 +151,6 @@ class TextBox(MultipleChoice):
         latex_data = {'text/latex':self.question_text}
 
         d = {'identifier': self.identifier,
-             'url': self.assignment,
              'answer':self.answer}
 
         textbox_code = '''
@@ -302,16 +274,6 @@ def find_identified_cells(nb, identifier):
                 cells.append(cell)
     return cells
 
-
-def update_output(output, identifier, answer):
-    """
-    Create a question from an output, and modify it in place
-    based on the given answer.
-    """
-    class_name, args, kw = output.json.constructor_info
-    question = construct_question(class_name, args, kw)
-    if question.checkable:
-        question.check_answer(output, answer)
 
 question_types = {'multiple_choice':MultipleChoice,
                   'true_false':TrueFalse,
