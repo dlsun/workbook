@@ -99,7 +99,7 @@ def set_student_cipher(user):
 @app.route('/hw/<nbname>')
 def hw(nbname):
     user = check_user(request)
-    return render_template('homework.html',nb = nbname)
+    return render_template('homework.html',nbname = nbname)
 
 def forward(nb, filename, user, nbname):
     """
@@ -157,21 +157,31 @@ def save_nb(nbname):
     return request.data
 
 # check a specific question in the notebook
-@app.route('/hw/<nbname>/check/<question_id>', methods=['GET','POST'])
-def check_nb_question(nbname,question_id):
+@app.route('/hw/<nbname>/check', methods=['POST'])
+def check_nb_question(nbname):
     global counter
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
 
     try:
-        identifier = request.json['name']
-        answer = request.json['value']
-        out = check_answer(filename, identifier, answer)
-        return json.dumps(out)
+        identifier = request.json.metadata.identifier
+        answer = request.json.metadata.answer
+        # check_answer should return a JSON file containing the new cell 
+        new_cell_json = check_answer(filename, identifier, answer)
+        if hasattr(new_cell_json, 'cell_type'):
+            if new_cell_json['cell_type']=='workbook':
+                return json.dumps(new_cell_json)
+        raise
     except Exception, err:
         import sys
         sys.stderr.write('ERROR: %s\n' % str(err))
-        return json.dumps({'comments': 'Error!'})
+        return json.dumps({
+                'cell_type': 'workbook',
+                'outputs': [ {
+                        'html': '<h2>Error</h2>',
+                        'output_type': 'display_data' 
+                        } ]
+                })
 
 # start server
 
