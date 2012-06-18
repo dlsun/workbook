@@ -676,7 +676,9 @@ var IPython = (function (IPython) {
             this.append_jpeg(json.jpeg, element);
         } else if (json.text !== undefined) {
             this.append_text(json.text, element);
-        };
+        } else if (json.comments !== undefined) {
+	    this.append_comments(json.comments, element);
+	};
     };
 
 
@@ -685,6 +687,19 @@ var IPython = (function (IPython) {
         toinsert.append(html);
         element.append(toinsert);
     };
+
+    // for adding comments -- which are just latex cells
+    WorkbookCell.prototype.append_comments = function (latex, element) {
+        // This method cannot do the typesetting because the latex first has to
+        // be on the page.
+        var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_latex comments");
+        toinsert.append(latex);
+        element.append(toinsert);
+    };
+
+    WorkbookCell.prototype.delete_comments = function () {
+	this.element.find("div.comments").parent("div.output_area").remove();
+    }
 
 
     WorkbookCell.prototype.append_javascript = function (js, container) {

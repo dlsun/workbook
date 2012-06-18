@@ -5,8 +5,8 @@ from workbook.converters import ConverterNotebook
 import IPython.nbformat.current as nbformat
 from workbook.utils.questions import (find_identified_cells,
                                       find_identified_outputs,
-                                      update_output,
-                                      question_types)
+                                      question_types,
+                                      construct_question)
 from workbook.io import *
 
 from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
@@ -33,18 +33,27 @@ def find_question_types():
 def update_question_types():
     question_types.update(find_question_types())
 
-def check_answer(filename, identifier, answer):
+def check_answer(filename, question_id, answer):
     tmpf = os.path.splitext(filename)[0] + '_tmp'
     converter = ConverterNotebook(filename, tmpf)
     converter.read()
 
-    cells = find_identified_cells(converter.nb, identifier)
+    cells = find_identified_cells(converter.nb, question_id)
     if len(cells) > 1:
         raise ValueError('more than one match: %s' % '\n'.join([str(c) for c in cells]))
-    outputs = find_identified_outputs(cells[0], identifier)
-    for output in outputs:
-        update_output(output, identifier, answer)
 
-    outfile = converter.render()
-    os.rename(outfile, filename)
-    return filename
+    outputs = find_identified_outputs(cells[0], question_id)
+#    for output in outputs:
+#        update_output(output, question_id, answer)
+
+#   outfile = converter.render()
+#   os.rename(outfile, filename)
+#   return filename
+     
+    class_name, args, kw = outputs[0].json.constructor_info
+    question = construct_question(class_name, args, kw)
+    if question.checkable:
+        return question.check_answer("This argument isn't used!", answer)
+    else:
+        return None
+
