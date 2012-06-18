@@ -33,27 +33,15 @@ def find_question_types():
 def update_question_types():
     question_types.update(find_question_types())
 
-def check_answer(filename, question_id, answer):
+def check_answer(cell, user, identifier, answer):
     tmpf = os.path.splitext(filename)[0] + '_tmp'
     converter = ConverterNotebook(filename, tmpf)
     converter.read()
 
-    cells = find_identified_cells(converter.nb, question_id)
-    if len(cells) > 1:
-        raise ValueError('more than one match: %s' % '\n'.join([str(c) for c in cells]))
-
-    outputs = find_identified_outputs(cells[0], question_id)
-#    for output in outputs:
-#        update_output(output, question_id, answer)
-
-#   outfile = converter.render()
-#   os.rename(outfile, filename)
-#   return filename
+    outputs = find_identified_outputs(cell, question_id)
      
-    class_name, args, kw = outputs[0].json.constructor_info
+    class_name, args, kw = cell.metadata.construction_info
     question = construct_question(class_name, args, kw)
-    if question.checkable:
-        return question.check_answer("This argument isn't used!", answer)
-    else:
-        return None
+
+    return question.check_answer(cell, user, answer)
 

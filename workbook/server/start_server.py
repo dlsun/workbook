@@ -167,7 +167,8 @@ def check_nb_question(nbname):
         identifier = request.json.metadata.identifier
         answer = request.json.metadata.answer
         # check_answer should return a JSON file containing the new cell 
-        new_cell_json = check_answer(filename, identifier, answer)
+        cell = request.json
+        new_cell_json = check_answer(cell, user, identifier, answer)
         if hasattr(new_cell_json, 'cell_type'):
             if new_cell_json['cell_type']=='workbook':
                 return json.dumps(new_cell_json)

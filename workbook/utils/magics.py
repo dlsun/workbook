@@ -53,7 +53,8 @@ class HomeworkMagics(Magics):
                                        'np.random.seed(seed); random.seed(seed)']))
         self.shell.run_line_magic("R", " -i seed set.seed(seed); rm(seed)")
         self.shell.run_cell(cell)
-        question_types[args.identifier] = CellQuestion
+        question = CellQuestion(cell, identifier)
+        question_types[args.identifier] = question
 
     @line_cell_magic
     def wb_latex(self, line, cell=None):
