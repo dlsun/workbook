@@ -8,6 +8,7 @@ from md5 import md5
 
 # IPython imports
 from IPython.core.displaypub import publish_display_data
+from IPython.core.display import display
 from IPython.core.magic import (Magics, magics_class, cell_magic, line_magic,
                                 line_cell_magic)
 from IPython.testing.skipdoctest import skip_doctest
@@ -22,7 +23,7 @@ import numpy as np
 # Local imports
 
 from .questions import publish_workbook_metadata, question_types
-from cell_question import CellQuestion
+from cell_question import CellQuestion, MultipleChoiceCell
 
 @magics_class
 class HomeworkMagics(Magics):
@@ -48,13 +49,10 @@ class HomeworkMagics(Magics):
     def wb_question(self, line, cell):
         "Generate a question after setting seed=seed+trial."
         args = parse_argstring(self.wb_question, line)
-        self.shell.user_ns['seed'] = args.seed + args.trial
-        self.shell.run_cell('\n'.join(['import numpy as np, random',
-                                       'np.random.seed(seed); random.seed(seed)']))
-        self.shell.run_line_magic("R", " -i seed set.seed(seed); rm(seed)")
-        self.shell.run_cell(cell)
-        question = CellQuestion(cell, identifier)
+        question = CellQuestion(cell, args.identifier)
         question_types[args.identifier] = question
+        outputs = question.form_cell(args.seed + args.trial, shell=self.shell)
+        question_types[question.identifier] = question
 
     @line_cell_magic
     def wb_latex(self, line, cell=None):
@@ -73,14 +71,11 @@ class HomeworkMagics(Magics):
         The check_answer just returns whether answer['answer'] == correct_answer
         
         """
-
-        multiple_choice_check_answer = """
-def check_answer(answer):
-    if answer not in choices:
-        raise ValueError('answer should be on of the choices: %s' % `(answer, choices)`)
-    return answer == correct_answer
-        """        cell = cell + multiple_choice_check_answer
-        self.wb_question(line, cell)
+        args = parse_argstring(self.wb_question, line)
+        question = MultipleChoiceCell(cell, args.identifier)
+        question_types[args.identifier] = question
+        outputs = question.form_cell(args.seed + args.trial, shell=self.shell)
+        question_types[question.identifier] = question
 
     @magic_arguments()
     @argument(

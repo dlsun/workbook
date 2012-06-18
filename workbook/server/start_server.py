@@ -163,6 +163,7 @@ def check_nb_question(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
 
+    import sys; sys.stderr.write(`request.json`+'\n')
     try:
         identifier = request.json.metadata.identifier
         answer = request.json.metadata.answer
