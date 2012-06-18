@@ -201,6 +201,11 @@ div.output_latex {
     color: black;
 }
 
+div.comments {
+    font-size: x-large;
+    color: green;
+}
+
 div.output_html {
 }
 

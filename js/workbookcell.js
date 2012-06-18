@@ -688,10 +688,12 @@ var IPython = (function (IPython) {
         element.append(toinsert);
     };
 
-    // for adding comments -- may change to a version of append_text later
-    WorkbookCell.prototype.append_comments = function (html, element) {
-        var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_html rendered_html comments");
-        toinsert.append(html);
+    // for adding comments -- which are just latex cells
+    WorkbookCell.prototype.append_comments = function (latex, element) {
+        // This method cannot do the typesetting because the latex first has to
+        // be on the page.
+        var toinsert = $("<div/>").addClass("box_flex1 output_subarea output_latex comments");
+        toinsert.append(latex);
         element.append(toinsert);
     };
 

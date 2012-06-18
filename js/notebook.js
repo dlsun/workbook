@@ -1269,6 +1269,7 @@ var IPython = (function (IPython) {
 	}
     };
 
+/*
     Notebook.prototype.check_cell = function (cell) {
 	form = cell.element.find('form')[0];
 	if(form !== undefined) {
@@ -1291,16 +1292,59 @@ var IPython = (function (IPython) {
 	    }
 	}
     };
+*/
 
+   // this passes a cell JSON to the server
+   Notebook.prototype.check_cell = function (cell) {
+	form = cell.element.find('form')[0];
+	if(form !== undefined) {
+	    if(form.value !== undefined) {
+		// is this necessary?
+		if(cell.metadata === undefined) cell.metadata = {};
+		// pass the identifier and answer in the metadata
+		cell.metadata['identifier'] = form.name;
+		cell.metadata['answer'] = form.value;
+		var settings = {
+		    processData : false,
+		    cache : false,
+		    type : "POST",
+		    data : JSON.stringify(cell),
+		    headers : {'Content-Type': 'application/json'},
+		    dataType : "json", // output data
+		    contentType: 'application/json;charset=UTF-8',
+ 		    success : $.proxy(this.check_cell_success,cell),
+ 		    error : $.proxy(this.check_cell_error,this)
+		};
+		var url = '/hw/' + this.notebook_name  + '/check' // server will determine question to check from the JSON
+		$.ajax(url, settings);	
+	    }
+	}	
+    }
+
+/*
     Notebook.prototype.check_cell_success = function(out_data) {
 	var output = {
 	    output_type : 'display_data',
-	    comments : '<h2>' + out_data.comments + '</h2>' // eventually this will just be plaintext and CSS takes care of formatting
+	    comments : out_data.comments // eventually this will just be plaintext and CSS takes care of formatting
 	};
 	// remove any existing comments and add current comments
 	this.delete_comments();
 	this.append_output(output, false);
+	this.save_notebook();
     }
+*/
+
+    Notebook.prototype.check_cell_success = function(new_cell_json) {
+	nb = this.notebook;
+	i = nb.find_cell_index(this);
+	// insert new cell and delete old cell
+	new_cell = nb.insert_cell_below('workbook',i);
+	new_cell.fromJSON(new_cell_json);
+	nb.delete_cell(i);
+	// save the new cell
+	nb.save_notebook();
+    }
+
 
     Notebook.prototype.check_cell_error = function (xhr, status, error_msg) {
 	window.alert(error_msg);
@@ -1325,7 +1369,7 @@ var IPython = (function (IPython) {
         };
         $([IPython.events]).trigger('notebook_saving.Notebook');
         //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
-	var url = '/hw/' + nb  + '/save'
+	var url = '/hw/' + this.notebook_name  + '/save'
         $.ajax(url, settings);
     };
 
@@ -1361,7 +1405,7 @@ var IPython = (function (IPython) {
         };
         $([IPython.events]).trigger('notebook_loading.Notebook');
         //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
-	var url = '/hw/' + nb  + '/load'
+	var url = '/hw/' + nbname  + '/load'
         $.ajax(url, settings);
     };
 
