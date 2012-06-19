@@ -71,6 +71,10 @@ var IPython = (function (IPython) {
         this.element.find('button#print_notebook').click(function () {
             IPython.print_widget.print_notebook();
         });
+        this.element.find('#kill_and_exit').click(function () {
+            IPython.notebook.kernel.kill();
+            setTimeout(function(){window.close();}, 200);
+        });
         // Edit
         this.element.find('#cut_cell').click(function () {
             IPython.notebook.cut_cell();
@@ -159,6 +163,15 @@ var IPython = (function (IPython) {
         });
         this.element.find('#toggle_output').click(function () {
             IPython.notebook.toggle_output();
+        });
+        this.element.find('#collapse_all_output').click(function () {
+            IPython.notebook.collapse_all_output();
+        });
+        this.element.find('#scroll_all_output').click(function () {
+            IPython.notebook.scroll_all_output();
+        });
+        this.element.find('#expand_all_output').click(function () {
+            IPython.notebook.expand_all_output();
         });
         this.element.find('#clear_all_output').click(function () {
             IPython.notebook.clear_all_output();

@@ -13,7 +13,7 @@ var IPython = (function (IPython) {
 
     // TextCell base class
 
-    var TextCell = function (notebook) {
+    var TextCell = function () {
         this.code_mirror_mode = this.code_mirror_mode || 'htmlmixed';
         IPython.Cell.apply(this, arguments);
         this.rendered = false;
@@ -155,9 +155,13 @@ var IPython = (function (IPython) {
 
 
     TextCell.prototype.fromJSON = function (data) {
+        IPython.Cell.prototype.fromJSON.apply(this, arguments);
         if (data.cell_type === this.cell_type) {
             if (data.source !== undefined) {
                 this.set_text(data.source);
+                // make this value the starting point, so that we can only undo
+                // to this state, instead of a blank cell
+                this.code_mirror.clearHistory();
                 this.set_rendered(data.rendered || '');
                 this.rendered = false;
                 this.render();
@@ -167,7 +171,7 @@ var IPython = (function (IPython) {
 
 
     TextCell.prototype.toJSON = function () {
-        var data = {};
+        var data = IPython.Cell.prototype.toJSON.apply(this);
         data.cell_type = this.cell_type;
         data.source = this.get_text();
         return data;
@@ -176,7 +180,7 @@ var IPython = (function (IPython) {
 
     // HTMLCell
 
-    var HTMLCell = function (notebook) {
+    var HTMLCell = function () {
         this.placeholder = "Type <strong>HTML</strong> and LaTeX: $\\alpha^2$";
         IPython.TextCell.apply(this, arguments);
         this.cell_type = 'html';
@@ -201,7 +205,7 @@ var IPython = (function (IPython) {
 
     // MarkdownCell
 
-    var MarkdownCell = function (notebook) {
+    var MarkdownCell = function () {
         this.placeholder = "Type *Markdown* and LaTeX: $\\alpha^2$";
         IPython.TextCell.apply(this, arguments);
         this.cell_type = 'markdown';
@@ -239,7 +243,7 @@ var IPython = (function (IPython) {
 
     // RawCell
 
-    var RawCell = function (notebook) {
+    var RawCell = function () {
         this.placeholder = "Type plain text and LaTeX: $\\alpha^2$";
         this.code_mirror_mode = 'rst';
         IPython.TextCell.apply(this, arguments);
@@ -285,7 +289,7 @@ var IPython = (function (IPython) {
 
     // HTMLCell
 
-    var HeadingCell = function (notebook) {
+    var HeadingCell = function () {
         this.placeholder = "Type Heading Here";
         IPython.TextCell.apply(this, arguments);
         this.cell_type = 'heading';
