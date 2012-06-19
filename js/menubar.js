@@ -53,6 +53,9 @@ var IPython = (function (IPython) {
         this.element.find('#save_notebook').click(function () {
             IPython.notebook.save_notebook();
         });
+        this.element.find('#check_notebook').click(function () {
+            IPython.notebook.check_notebook();
+        });
         this.element.find('#download_ipynb').click(function () {
             var notebook_id = IPython.notebook.get_notebook_id();
             var url = $('body').data('baseProjectUrl') + 'notebooks/' +
@@ -67,10 +70,6 @@ var IPython = (function (IPython) {
         });
         this.element.find('button#print_notebook').click(function () {
             IPython.print_widget.print_notebook();
-        });
-        this.element.find('#kill_and_exit').click(function () {
-            IPython.notebook.kernel.kill();
-            setTimeout(function(){window.close();}, 200);
         });
         // Edit
         this.element.find('#cut_cell').click(function () {
@@ -122,6 +121,9 @@ var IPython = (function (IPython) {
         this.element.find('#run_cell').click(function () {
             IPython.notebook.execute_selected_cell();
         });
+        this.element.find('#check_cell').click(function () {
+            IPython.notebook.check_cell();
+        });
         this.element.find('#run_cell_in_place').click(function () {
             IPython.notebook.execute_selected_cell({terminal:true});
         });
@@ -157,15 +159,6 @@ var IPython = (function (IPython) {
         });
         this.element.find('#toggle_output').click(function () {
             IPython.notebook.toggle_output();
-        });
-        this.element.find('#collapse_all_output').click(function () {
-            IPython.notebook.collapse_all_output();
-        });
-        this.element.find('#scroll_all_output').click(function () {
-            IPython.notebook.scroll_all_output();
-        });
-        this.element.find('#expand_all_output').click(function () {
-            IPython.notebook.expand_all_output();
         });
         this.element.find('#clear_all_output').click(function () {
             IPython.notebook.clear_all_output();
