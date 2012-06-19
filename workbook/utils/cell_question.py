@@ -25,22 +25,22 @@ class CellQuestion(object):
                                 '%R -i seed set.seed(seed); rm(seed)', ''])
         return cell_input
 
-    def set_answer(self, answer):
-        cell_input = '\n'.join(['answer=json.loads("""%s""")' % json.dumps(answer), '']) 
+    def set_json(self, name, data):
+        cell_input = '\n'.join(['%s=json.loads("""%s""")' % (name, json.dumps(data)), ''])
         return cell_input
 
-    def form_cell(self, seed, answer_metadata=None, shell=None):
+    def form_cell(self, seed, metadata={}, shell=None):
         cell_input = self.set_seed(seed)
-        if answer_metadata is not None:
-            cell_input += self.set_answer(answer_metadata)
+        if metadata is not None:
+            cell_input += self.set_answer('metadata', metadata)
         cell_input += self.cell_input            
         outputs = run_cell(cell_input, shell=shell)
 
         cell = nbformat.new_code_cell(input=cell_input, outputs=outputs,
-                                      metadata={})
+                                      metadata=metadata)
 
-        if answer is not None:
-            answer_outputs = run_cell("\nanswer_metadata=check_answer(answer)\n")
+        if metadata is not None:
+            answer_outputs = run_cell("\metadata.update(check_answer(metadata))\n")
             metadata_outputs = run_cell('\n'.join(["publish_display_data('CellQuestion', {'application/json':answer_metadata})", "del(answer_metadata)"]))
             outputs.append(answer_outputs)
             import sys; sys.stderr.write(`metadata_outputs` + '\n')
@@ -62,8 +62,8 @@ class CellQuestion(object):
 
 class MultipleChoiceCell(CellQuestion):
     multiple_choice_check_answer = """
-def check_answer(answer_metadata):
-    answer = answer_metadata['answer']
+def check_answer(metadata):
+    answer = metadata['answer']
     if answer not in choices:
         raise ValueError('answer should be on of the choices: %s' % `(answer, choices)`)
     correct = answer == correct_answer
@@ -91,33 +91,42 @@ def check_answer(answer_metadata):
                                 "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % radio_code][:2]) 
         return form_input
 
-    def form_cell(self, seed, answer_metadata=None, shell=None):
+    def form_cell(self, seed, metadata={}, shell=None):
         cell_input = MultipleChoiceCell.multiple_choice_check_answer
         cell_input += self.set_seed(seed)
-        if answer_metadata is not None:
-            cell_input += self.set_answer(answer_metadata)
+        if 'answer' in metadata:
+            cell_input += self.set_json('metadata', metadata)
         cell_input += self.cell_input            
 
         outputs = run_cell(cell_input, shell=shell)
 
         cell = nbformat.new_code_cell(input=cell_input, outputs=outputs,
-                                      metadata=answer_metadata)
+                                      metadata=metadata)
 
         # get the choices and produce the buttons
 
         choice_outputs = run_cell("\npublish_display_data('CellQuestion', {'application/json':{'choices':choices}})\n", shell=shell)
         choices = choice_outputs[0].json['choices']
 
-        if answer_metadata is not None:
-            form_outputs = run_cell(self.generate_form_input(choices, checked=answer_metadata['answer']), shell=shell)
+        if 'answer' not in metadata:
+            # add owner, user to cell
+            outputs = run_cell(self.set_json('metadata', {'owner':'workbook', 'user':'teacher'}), shell=shell)
+            # import sys; sys.stderr.write('input: ' + `self.set_json('metadata', {'owner':'workbook', 'user':'teacher'})`+ '\n')
+            # import sys; sys.stderr.write('outputs: ' + `outputs` + '\n')
+            metadata_outputs = run_cell('\n'.join(["publish_display_data('CellQuestion', {'application/json':metadata})", "del(metadata)"]), shell=shell)
+            cell.metadata.update(metadata_outputs[0].json)
+            # import sys; sys.stderr.write('cell metadata: ' + `cell.metadata`+ '\n')
+
+        if 'answer' in metadata:
+            form_outputs = run_cell(self.generate_form_input(choices, checked=metadata['answer']), shell=shell)
         else:
             form_outputs = run_cell(self.generate_form_input(choices), shell=shell)
         cell.outputs += form_outputs
 
-        if answer_metadata is not None:
-            cell.outputs += run_cell("\nanswer_metadata=check_answer(answer)\n", shell=shell)
+        if 'answer' in metadata:
+            cell.outputs += run_cell("\nmetadata.update(check_answer(metadata))\n", shell=shell)
             # A hack to add the metadata to the new cell
-            metadata_outputs = run_cell('\n'.join(["publish_display_data('CellQuestion', {'application/json':answer_metadata})", "del(answer_metadata)"]), shell=shell)
+            metadata_outputs = run_cell('\n'.join(["publish_display_data('CellQuestion', {'application/json':metadata})", "del(metadata)"]), shell=shell)
             cell.metadata.update(metadata_outputs[0].json)
 
         cell.outputs += run_cell('publish_display_data("CellQuestion", {"text/html":"%s"})' % str(cell.metadata))

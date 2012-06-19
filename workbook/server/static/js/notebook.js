@@ -1234,7 +1234,7 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
-                if (cell_data.owner == 'workbook'){
+                if (cell_data.metadata.owner == 'workbook'){
                     cell_data.cell_type = 'workbook';
                 }
 
@@ -1303,7 +1303,6 @@ var IPython = (function (IPython) {
 	i = nb.find_cell_index(this);
 	// insert new cell and delete old cell
 	new_cell = nb.insert_cell_below('workbook',i);
-	alert("huh");
 	new_cell.fromJSON(new_cell_json);
 	nb.delete_cell(i);
 	// save the new cell

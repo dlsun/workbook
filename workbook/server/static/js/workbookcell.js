@@ -914,7 +914,6 @@ var IPython = (function (IPython) {
                     this.expand();
                 };
             this.metadata = data.metadata;
-	    alert(JSON.stringify(this.metadata));
             };
         } else {
 	    alert('not a workbook cell');
@@ -924,7 +923,6 @@ var IPython = (function (IPython) {
 
     WorkbookCell.prototype.toJSON = function () {
         var data = {};
-	alert(JSON.stringify(this.metadata));
         data.input = this.get_text();
         data.cell_type = 'code'; // Turn the cell back to 'code' for saving 
         if (this.input_prompt_number) {

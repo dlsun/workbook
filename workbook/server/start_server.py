@@ -113,6 +113,7 @@ def forward(nb, filename, user, nbname):
     student = StudentMetadata(filename, 'student')
     
     # composition is right to left
+
     # nb = compose_converters(nb, student, encrypt)
     nb = compose_converters(nb, student)
     nb.metadata.name = nbname
@@ -131,7 +132,7 @@ def reverse(nb, filename, user, nbname):
     rm_meta = RemoveMetadata(filename, 'rm_meta')
     
     # composition is right to left
-    # nb = compose_converters(nb, decrypt, rm_meta)
+    #nb = compose_converters(nb, decrypt, rm_meta)
     nb = compose_converters(nb, rm_meta)
     nb.metadata.name = nbname
 
@@ -144,6 +145,9 @@ def load_nb(nbname):
     user = check_user(request)
     filename = os.path.join(user_folder(user), nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            import sys ; sys.stderr.write('\n cell metadata:' + `cell.metadata` + '\n')
     nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)
 
