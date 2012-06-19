@@ -3,6 +3,7 @@ from workbook.io import *
 
 import IPython.nbformat.current as nbformat
 from workbook.utils.execute_and_save import shell, run_cell as km_run_cell
+from workbook.utils.questions import question_types
 
 def run_cell(cell_input, shell=None):
     if shell is not None:
@@ -42,6 +43,7 @@ class CellQuestion(object):
             answer_outputs = run_cell("\nanswer_metadata=check_answer(answer)\n")
             metadata_outputs = run_cell('\n'.join(["publish_display_data('CellQuestion', {'application/json':answer_metadata})", "del(answer_metadata)"]))
             outputs.append(answer_outputs)
+            import sys; sys.stderr.write(`metadata_outputs` + '\n')
             cell.metadata.update(metadata_outputs[0].json)
         return cell
 
@@ -54,8 +56,8 @@ class CellQuestion(object):
         seed = json.load(open(os.path.join(PATH_TO_HW_FILES,
                                            user['id'], 
                                            "student_info.json"), 'rb'))['seed']
-        if hasattr(json_cell.metadata, "trial_number"):
-            seed += json_cell.metadata.trial_number
+        if "trial_number" in json_cell['metadata']:
+            seed += json_cell['metadata']['trial_number']
         return self.form_cell(seed, answer, shell=shell)
 
 class MultipleChoiceCell(CellQuestion):
@@ -111,8 +113,9 @@ def check_answer(json_answer):
         if answer is not None:
             answer_outputs = run_cell("\nanswer_metadata=check_answer(answer)\n", shell=shell)
             metadata_outputs = run_cell('\n'.join(["publish_display_data('CellQuestion', {'application/json':answer_metadata})", "del(answer_metadata)"]), shell=shell)
-            outputs.append(answer_outputs)
+            cell.outputs.append(answer_outputs)
             cell.metadata.update(metadata_outputs[0].json)
+        cell.cell_type = 'workbook'
         return cell
 
 

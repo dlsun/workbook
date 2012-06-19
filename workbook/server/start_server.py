@@ -113,7 +113,8 @@ def forward(nb, filename, user, nbname):
     student = StudentMetadata(filename, 'student')
     
     # composition is right to left
-    nb = compose_converters(nb, student, encrypt)
+    # nb = compose_converters(nb, student, encrypt)
+    nb = compose_converters(nb, student)
     nb.metadata.name = nbname
 
     return nb
@@ -130,7 +131,8 @@ def reverse(nb, filename, user, nbname):
     rm_meta = RemoveMetadata(filename, 'rm_meta')
     
     # composition is right to left
-    nb = compose_converters(nb, decrypt, rm_meta)
+    # nb = compose_converters(nb, decrypt, rm_meta)
+    nb = compose_converters(nb, rm_meta)
     nb.metadata.name = nbname
 
     return nb
@@ -163,27 +165,27 @@ def check_nb_question(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
 
-    import sys; sys.stderr.write(`request.json`+'\n')
-    try:
-        identifier = request.json.metadata.identifier
-        answer = request.json.metadata.answer
+    if True:
+    # try:
+        import sys; sys.stderr.write(`request.json`+'\n')
+        identifier = request.json['metadata']['identifier']
+        answer = request.json['metadata']['answer']
         # check_answer should return a JSON file containing the new cell 
         cell = request.json
-        new_cell_json = check_answer(cell, user, identifier, answer)
+        new_cell_json = check_answer(cell, user, identifier, {'answer':answer})
         if hasattr(new_cell_json, 'cell_type'):
             if new_cell_json['cell_type']=='workbook':
                 return json.dumps(new_cell_json)
-        raise
-    except Exception, err:
-        import sys
-        sys.stderr.write('ERROR: %s\n' % str(err))
-        return json.dumps({
-                'cell_type': 'workbook',
-                'outputs': [ {
-                        'html': '<h2>Error</h2>',
-                        'output_type': 'display_data' 
-                        } ]
-                })
+#        raise
+#     except Exception, err:
+#         import sys
+#         sys.stderr.write('ERROR: %s\n' % str(err))
+#         output = nbformat.new_output(output_type='display_data', output_html='<h2>Error: %s\n</h2>' % str(err))
+#         request.json['outputs'].append(output)
+#         request.json['cell_type'] = 'workbook'
+#         import sys; sys.stderr.write(`request.json`+'\n')
+#         return json.dumps(request.json)
+
 
 # start server
 
