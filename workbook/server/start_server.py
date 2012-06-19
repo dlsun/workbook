@@ -154,6 +154,11 @@ def save_nb(nbname):
     user = check_user(request)
     filename = os.path.join(user_folder(user), nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
+    import sys; sys.stderr.write('save data: ' + `request.data` + '\n')
+
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            sys.stderr.write('\n cell metadata:' + `cell.metadata` + '\n')
     nb = reverse(nb, filename, user, nbname)
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
@@ -165,27 +170,12 @@ def check_nb_question(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
 
-    if True:
-    # try:
-        import sys; sys.stderr.write(`request.json`+'\n')
-        identifier = request.json['metadata']['identifier']
-        answer = request.json['metadata']['answer']
-        # check_answer should return a JSON file containing the new cell 
-        cell = request.json
-        new_cell_json = check_answer(cell, user, identifier, {'answer':answer})
-        if hasattr(new_cell_json, 'cell_type'):
-            if new_cell_json['cell_type']=='workbook':
-                return json.dumps(new_cell_json)
-#        raise
-#     except Exception, err:
-#         import sys
-#         sys.stderr.write('ERROR: %s\n' % str(err))
-#         output = nbformat.new_output(output_type='display_data', output_html='<h2>Error: %s\n</h2>' % str(err))
-#         request.json['outputs'].append(output)
-#         request.json['cell_type'] = 'workbook'
-#         import sys; sys.stderr.write(`request.json`+'\n')
-#         return json.dumps(request.json)
-
+    identifier = request.json['metadata']['identifier']
+    answer = request.json['metadata']['answer']
+    # check_answer should return a JSON file containing the new cell 
+    cell = request.json
+    new_cell_json = check_answer(cell, user)
+    return json.dumps(new_cell_json)
 
 # start server
 

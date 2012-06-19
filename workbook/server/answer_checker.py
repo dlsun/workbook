@@ -33,8 +33,8 @@ def find_question_types():
 def update_question_types():
     question_types.update(find_question_types())
 
-def check_answer(cell, user, identifier, answer):
+def check_answer(cell, user):
     question = question_types[cell['metadata']['identifier']]
 
-    return question.check_answer(cell, user, answer)
+    return question.check_answer(cell, user)
 
