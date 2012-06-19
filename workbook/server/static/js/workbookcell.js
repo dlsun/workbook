@@ -914,12 +914,16 @@ var IPython = (function (IPython) {
                     this.expand();
                 };
             };
+        } else {
+	    alert('not a workbook cell');
         };
     };
 
 
     WorkbookCell.prototype.toJSON = function () {
         var data = {};
+	alert("herenow");
+	alert(JSON.stringify(this.metadata));
         data.input = this.get_text();
         data.cell_type = 'code'; // Turn the cell back to 'code' for saving 
         if (this.input_prompt_number) {
@@ -933,6 +937,7 @@ var IPython = (function (IPython) {
         data.outputs = outputs;
         data.language = 'python';
         data.collapsed = this.collapsed;
+	data.metadata = this.metadata;
         return data;
     };
 

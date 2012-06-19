@@ -34,14 +34,7 @@ def update_question_types():
     question_types.update(find_question_types())
 
 def check_answer(cell, user, identifier, answer):
-    tmpf = os.path.splitext(filename)[0] + '_tmp'
-    converter = ConverterNotebook(filename, tmpf)
-    converter.read()
-
-    outputs = find_identified_outputs(cell, question_id)
-     
-    class_name, args, kw = cell.metadata.construction_info
-    question = construct_question(class_name, args, kw)
+    question = question_types[cell['metadata']['identifier']]
 
     return question.check_answer(cell, user, answer)
 

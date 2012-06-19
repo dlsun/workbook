@@ -1269,41 +1269,20 @@ var IPython = (function (IPython) {
 	}
     };
 
-/*
-    Notebook.prototype.check_cell = function (cell) {
-	form = cell.element.find('form')[0];
-	if(form !== undefined) {
-	    if(form.value !== undefined) {
-		data = { name : form.name, value : form.value };
-		// We do the call with settings so we can set cache to false.
-		var settings = {
-		    processData : false,
-		    cache : false,
-		    type : "POST",
-		    data : JSON.stringify(data),
-		    headers : {'Content-Type': 'application/json'},
-		    dataType : "json", // output data
-		    contentType: 'application/json;charset=UTF-8', // added by Dennis
- 		    success : $.proxy(this.check_cell_success,cell),
- 		    error : $.proxy(this.check_cell_error,this)
-		};
-		var url = '/hw/' + nb  + '/check/' + data.name
-		$.ajax(url, settings);
-	    }
-	}
-    };
-*/
-
    // this passes a cell JSON to the server
    Notebook.prototype.check_cell = function (cell) {
 	form = cell.element.find('form')[0];
 	if(form !== undefined) {
 	    if(form.value !== undefined) {
 		// is this necessary?
-		if(cell.metadata === undefined) cell.metadata = {};
+		if(cell.metadata === undefined) {
+                     cell.metadata = {'identifier':null, 'value':null};
+		};
 		// pass the identifier and answer in the metadata
-		cell.metadata['identifier'] = form.name;
-		cell.metadata['answer'] = form.value;
+		cell.metadata.identifier = form.name;
+		cell.metadata.answer = form.value;
+		alert(JSON.stringify(cell.metadata));
+
 		var settings = {
 		    processData : false,
 		    cache : false,
@@ -1312,7 +1291,7 @@ var IPython = (function (IPython) {
 		    headers : {'Content-Type': 'application/json'},
 		    dataType : "json", // output data
 		    contentType: 'application/json;charset=UTF-8',
- 		    success : $.proxy(this.check_cell_success,cell),
+ 		    success : $.proxy(this.check_cell_success,cell), // why cell here? will this be the returned value? it should be
  		    error : $.proxy(this.check_cell_error,this)
 		};
 		var url = '/hw/' + this.notebook_name  + '/check' // server will determine question to check from the JSON
@@ -1321,25 +1300,13 @@ var IPython = (function (IPython) {
 	}	
     }
 
-/*
-    Notebook.prototype.check_cell_success = function(out_data) {
-	var output = {
-	    output_type : 'display_data',
-	    comments : out_data.comments // eventually this will just be plaintext and CSS takes care of formatting
-	};
-	// remove any existing comments and add current comments
-	this.delete_comments();
-	this.append_output(output, false);
-	this.save_notebook();
-    }
-*/
-
     Notebook.prototype.check_cell_success = function(new_cell_json) {
 	nb = this.notebook;
 	i = nb.find_cell_index(this);
 	// insert new cell and delete old cell
 	new_cell = nb.insert_cell_below('workbook',i);
 	new_cell.fromJSON(new_cell_json);
+	new_cell.render();
 	nb.delete_cell(i);
 	// save the new cell
 	nb.save_notebook();
