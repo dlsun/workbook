@@ -27,7 +27,7 @@ def create_assignment(assignmentfile, student_info):
     student_info = json.load(file(student_info, 'rb'))
     student_id = student_info['id']
 
-# make output directory
+    # make output directory
 
     odir = os.path.join(PATH_TO_HW_FILES, student_id)
     if not os.path.exists(odir):
@@ -36,21 +36,7 @@ def create_assignment(assignmentfile, student_info):
     outfile = os.path.join(odir, os.path.split(assignmentfile)[1])
     shutil.copy(assignmentfile, outfile)
 
-    # inject the seed as the first line of the first code cell
-    # should be a neater way to do this
-    nb = nbc.nbformat.read(open(outfile, 'rb'), 'json')
-    # it doesn't seem like inserted_seed is doing anything -Dennis
-    inserted_seed = False
-    for ws in nb.worksheets:
-        if not inserted_seed:
-            for cell in ws.cells:
-                if cell.cell_type == 'code':
-                    cell.input = 'seed=%d\n' % student_info['seed'] + cell.input
-                    inserted_seed = True
-                    break
-
-    nbc.nbformat.write(nb, open(outfile, 'wb'), 'json')
-    newfile = execute_and_save(outfile)
+    newfile = execute_and_save(outfile, student_info)
     os.rename(newfile, outfile)
     converter = AddMetadata(outfile, os.path.splitext(outfile)[0] + '_tmp',
                             {'owner':'workbook',

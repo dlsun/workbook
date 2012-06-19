@@ -36,14 +36,8 @@ class HomeworkMagics(Magics):
     @argument(
         '--seed', 
         type=int,
-        default=0,
+        default=None,
         help='Random seed to set.'
-        )
-    @argument(
-        '--trial',
-        type=int,
-        default=0,
-        help='Which trial on this problem.'
         )
     @cell_magic
     def wb_question(self, line, cell):
@@ -51,7 +45,12 @@ class HomeworkMagics(Magics):
         args = parse_argstring(self.wb_question, line)
         question = CellQuestion(cell, args.identifier)
         question_types[args.identifier] = question
-        outputs = question.form_cell(args.seed + args.trial, shell=self.shell)
+        if args.seed is None:
+            if 'seed' in self.shell.user_ns:
+                seed = int(self.shell.user_ns['seed'])
+            else:
+                seed = 0
+        outputs = question.form_cell(seed, shell=self.shell)
         question_types[question.identifier] = question
 
     @line_cell_magic
@@ -74,7 +73,13 @@ class HomeworkMagics(Magics):
         args = parse_argstring(self.wb_question, line)
         question = MultipleChoiceCell(cell, args.identifier)
         question_types[args.identifier] = question
-        outputs = question.form_cell(args.seed + args.trial, shell=self.shell)
+        if args.seed is None:
+            if 'seed' in self.shell.user_ns:
+                seed = int(self.shell.user_ns['seed'])
+            else:
+                seed = 0
+
+        outputs = question.form_cell(seed, shell=self.shell)
         question_types[question.identifier] = question
 
     @magic_arguments()

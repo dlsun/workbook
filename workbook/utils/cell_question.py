@@ -3,7 +3,6 @@ from workbook.io import *
 
 import IPython.nbformat.current as nbformat
 from workbook.utils.execute_and_save import shell, run_cell as km_run_cell
-from workbook.utils.questions import question_types
 
 def run_cell(cell_input, shell=None):
     if shell is not None:

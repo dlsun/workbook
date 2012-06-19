@@ -7,7 +7,7 @@ from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, 
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata)
 from workbook.converters import compose_converters
 
-from workbook.server.answer_checker import update_question_types, check_answer
+from workbook.server.answer_checker import check_answer, initialize_shell
 from workbook.utils.homework_creator import create_assignment
 from workbook.io import *
 
@@ -114,8 +114,7 @@ def forward(nb, filename, user, nbname):
     
     # composition is right to left
 
-    # nb = compose_converters(nb, student, encrypt)
-    nb = compose_converters(nb, student)
+    nb = compose_converters(nb, student, encrypt)
     nb.metadata.name = nbname
 
     return nb
@@ -132,8 +131,7 @@ def reverse(nb, filename, user, nbname):
     rm_meta = RemoveMetadata(filename, 'rm_meta')
     
     # composition is right to left
-    #nb = compose_converters(nb, decrypt, rm_meta)
-    nb = compose_converters(nb, rm_meta)
+    nb = compose_converters(nb, decrypt, rm_meta)
     nb.metadata.name = nbname
 
     return nb
@@ -145,9 +143,6 @@ def load_nb(nbname):
     user = check_user(request)
     filename = os.path.join(user_folder(user), nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
-    for ws in nb.worksheets:
-        for cell in ws.cells:
-            import sys ; sys.stderr.write('\n cell metadata:' + `cell.metadata` + '\n')
     nb = forward(nb, filename, user, nbname)
     return json.dumps(nb)
 
@@ -158,11 +153,6 @@ def save_nb(nbname):
     user = check_user(request)
     filename = os.path.join(user_folder(user), nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
-    import sys; sys.stderr.write('save data: ' + `request.data` + '\n')
-
-    for ws in nb.worksheets:
-        for cell in ws.cells:
-            sys.stderr.write('\n cell metadata:' + `cell.metadata` + '\n')
     nb = reverse(nb, filename, user, nbname)
     nbformat.write(nb, open(filename, 'wb'), 'json')
     return request.data
@@ -184,7 +174,7 @@ def check_nb_question(nbname):
 # start server
 
 def main():
-    update_question_types()
+    initialize_shell() # this loads all assignments into question_types so they can be checked later
     app.run(debug=True,host='0.0.0.0', use_reloader=True, use_debugger=True)
     #app.run(debug=False,host='0.0.0.0')
 
