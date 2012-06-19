@@ -14,12 +14,15 @@ var IPython = (function (IPython) {
     var utils = IPython.utils;
 
 
-    var Cell = function () {
+    var Cell = function (notebook) {
         this.placeholder = this.placeholder || '';
+        this.notebook = notebook;
         this.read_only = false;
+        if (notebook){
+            this.read_only = notebook.read_only;
+        }
         this.selected = false;
         this.element = null;
-        this.metadata = {};
         this.create_element();
         if (this.element !== null) {
             this.element.data("cell", this);
@@ -35,15 +38,15 @@ var IPython = (function (IPython) {
 
     Cell.prototype.bind_events = function () {
         var that = this;
-        // We trigger events so that Cell doesn't have to depend on Notebook.
+        var nb = that.notebook;
         that.element.click(function (event) {
             if (that.selected === false) {
-                $([IPython.events]).trigger('select.Cell', {'cell':that});
+                nb.select(nb.find_cell_index(that));
             }
         });
         that.element.focusin(function (event) {
             if (that.selected === false) {
-                $([IPython.events]).trigger('select.Cell', {'cell':that});
+                nb.select(nb.find_cell_index(that));
             }
         });
     };
@@ -91,16 +94,10 @@ var IPython = (function (IPython) {
 
 
     Cell.prototype.toJSON = function () {
-        var data = {};
-        data.metadata = this.metadata;
-        return data;
     };
 
 
     Cell.prototype.fromJSON = function (data) {
-        if (data.metadata !== undefined) {
-            this.metadata = data.metadata;
-        }
     };
 
 
