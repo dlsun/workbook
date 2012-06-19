@@ -1217,7 +1217,7 @@ var IPython = (function (IPython) {
 */
 
     Notebook.prototype.check_cell_success = function(new_cell_json) {
-	nb = this.notebook;
+	nb = IPython.notebook;
 	i = nb.find_cell_index(this);
 	// insert new cell and delete old cell
 	new_cell = nb.insert_cell_below('workbook',i);
