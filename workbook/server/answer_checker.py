@@ -3,7 +3,7 @@
 import os, glob
 from workbook.converters import ConverterNotebook
 import IPython.nbformat.current as nbformat
-from workbook.utils.questions import question_types
+from workbook.utils.cell_question import question_types
 from workbook.io import *
 
 from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell

@@ -1,6 +1,8 @@
 import json
 from workbook.io import *
 
+question_types = {}
+
 import IPython.nbformat.current as nbformat
 from workbook.utils.execute_and_save import shell, run_cell as km_run_cell
 
