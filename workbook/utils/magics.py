@@ -23,7 +23,7 @@ import numpy as np
 # Local imports
 
 from .questions import publish_workbook_metadata, question_types
-from cell_question import CellQuestion, MultipleChoiceCell
+from cell_question import CellQuestion, MultipleChoiceCell, PracticeMultipleChoiceCell
 
 @magics_class
 class HomeworkMagics(Magics):
@@ -72,6 +72,27 @@ class HomeworkMagics(Magics):
         """
         args = parse_argstring(self.wb_question, line)
         question = MultipleChoiceCell(cell, args.identifier)
+        question_types[args.identifier] = question
+        if args.seed is None:
+            if 'seed' in self.shell.user_ns:
+                seed = int(self.shell.user_ns['seed'])
+            else:
+                seed = 0
+
+        outputs = question.form_cell(seed, shell=self.shell)
+        question_types[question.identifier] = question
+
+    @cell_magic
+    def wb_multiple_choice_practice(self, line, cell):
+        """
+        Create a multiple CellQuestion. The cell
+        must have variables 'choices' and 'correct_answer' defined.
+
+        The check_answer just returns whether answer['answer'] == correct_answer
+        
+        """
+        args = parse_argstring(self.wb_question, line)
+        question = PracticeMultipleChoiceCell(cell, args.identifier)
         question_types[args.identifier] = question
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
