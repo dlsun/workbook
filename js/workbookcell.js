@@ -6,7 +6,7 @@
 //----------------------------------------------------------------------------
 
 //============================================================================
-// WorkbookCell
+// CodeCell
 //============================================================================
 
 var IPython = (function (IPython) {
@@ -15,7 +15,7 @@ var IPython = (function (IPython) {
     var utils = IPython.utils;
     var key   = IPython.utils.keycodes;
 
-    var WorkbookCell = function (kernel) {
+    var CodeCell = function (kernel) {
         // The kernel doesn't have to be set at creation time, in that case
         // it will be null and set_kernel has to be called later.
         this.kernel = kernel || null;
@@ -27,10 +27,10 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype = new IPython.Cell();
+    CodeCell.prototype = new IPython.Cell();
 
 
-    WorkbookCell.prototype.create_element = function () {
+    CodeCell.prototype.create_element = function () {
         var cell =  $('<div></div>').addClass('cell border-box-sizing code_cell vbox');
         cell.attr('tabindex','2');
         var input = $('<div></div>').addClass('input hbox');
@@ -40,12 +40,12 @@ var IPython = (function (IPython) {
             indentUnit : 4,
             mode: 'python',
             theme: 'ipython',
-            readOnly: "nocursor",
-//             onKeyEvent: $.proxy(this.handle_codemirror_keyevent,this)
+            readOnly: this.read_only,
+            onKeyEvent: $.proxy(this.handle_codemirror_keyevent,this)
         });
         input.append(input_area);
         var output = $('<div></div>');
-        cell.append(output);
+        cell.append(input).append(output);
         this.element = cell;
         this.output_area = new IPython.OutputArea(output, true);
 
@@ -57,16 +57,16 @@ var IPython = (function (IPython) {
         }
     };
 
-    WorkbookCell.prototype.handle_codemirror_keyevent = function (editor, event) {
+    CodeCell.prototype.handle_codemirror_keyevent = function (editor, event) {
         // This method gets called in CodeMirror's onKeyDown/onKeyPress
         // handlers and is used to provide custom key handling. Its return
         // value is used to determine if CodeMirror should ignore the event:
         // true = ignore, false = don't ignore.
-        
+
         if (this.read_only){
-            return true;
+            return false;
         }
-        
+
         var that = this;
         // whatever key is pressed, first, cancel the tooltip request before
         // they are sent, and remove tooltip if any, except for tab again
@@ -149,12 +149,12 @@ var IPython = (function (IPython) {
 
     // Kernel related calls.
 
-    WorkbookCell.prototype.set_kernel = function (kernel) {
+    CodeCell.prototype.set_kernel = function (kernel) {
         this.kernel = kernel;
     }
 
 
-    WorkbookCell.prototype.execute = function () {
+    CodeCell.prototype.execute = function () {
         this.output_area.clear_output(true, true, true);
         this.set_input_prompt('*');
         this.element.addClass("running");
@@ -168,20 +168,20 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype._handle_execute_reply = function (content) {
+    CodeCell.prototype._handle_execute_reply = function (content) {
         this.set_input_prompt(content.execution_count);
         this.element.removeClass("running");
         $([IPython.events]).trigger('set_dirty.Notebook', {'value': true});
     }
 
-    WorkbookCell.prototype._handle_set_next_input = function (text) {
+    CodeCell.prototype._handle_set_next_input = function (text) {
         var data = {'cell': this, 'text': text}
         $([IPython.events]).trigger('set_next_input.Notebook', data);
     }
 
     // Basic cell manipulation.
 
-    WorkbookCell.prototype.select = function () {
+    CodeCell.prototype.select = function () {
         IPython.Cell.prototype.select.apply(this);
         this.code_mirror.refresh();
         this.code_mirror.focus();
@@ -191,7 +191,7 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype.select_all = function () {
+    CodeCell.prototype.select_all = function () {
         var start = {line: 0, ch: 0};
         var nlines = this.code_mirror.lineCount();
         var last_line = this.code_mirror.getLine(nlines-1);
@@ -200,52 +200,52 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype.collapse = function () {
+    CodeCell.prototype.collapse = function () {
         this.collapsed = true;
         this.output_area.collapse();
     };
 
 
-    WorkbookCell.prototype.expand = function () {
+    CodeCell.prototype.expand = function () {
         this.collapsed = false;
         this.output_area.expand();
     };
 
 
-    WorkbookCell.prototype.toggle_output = function () {
+    CodeCell.prototype.toggle_output = function () {
         this.collapsed = Boolean(1 - this.collapsed);
         this.output_area.toggle_output();
     };
 
 
-    WorkbookCell.prototype.toggle_output_scroll = function () {
+    CodeCell.prototype.toggle_output_scroll = function () {
     this.output_area.toggle_scroll();
     };
 
 
-    WorkbookCell.prototype.set_input_prompt = function (number) {
+    CodeCell.prototype.set_input_prompt = function (number) {
         this.input_prompt_number = number;
         var ns = number || "&nbsp;";
         this.element.find('div.input_prompt').html('In&nbsp;[' + ns + ']:');
     };
 
 
-    WorkbookCell.prototype.clear_input = function () {
+    CodeCell.prototype.clear_input = function () {
         this.code_mirror.setValue('');
     };
 
 
-    WorkbookCell.prototype.get_text = function () {
+    CodeCell.prototype.get_text = function () {
         return this.code_mirror.getValue();
     };
 
 
-    WorkbookCell.prototype.set_text = function (code) {
+    CodeCell.prototype.set_text = function (code) {
         return this.code_mirror.setValue(code);
     };
 
 
-    WorkbookCell.prototype.at_top = function () {
+    CodeCell.prototype.at_top = function () {
         var cursor = this.code_mirror.getCursor();
         if (cursor.line === 0) {
             return true;
@@ -255,7 +255,7 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype.at_bottom = function () {
+    CodeCell.prototype.at_bottom = function () {
         var cursor = this.code_mirror.getCursor();
         if (cursor.line === (this.code_mirror.lineCount()-1)) {
             return true;
@@ -265,14 +265,14 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype.clear_output = function (stdout, stderr, other) {
+    CodeCell.prototype.clear_output = function (stdout, stderr, other) {
         this.output_area.clear_output(stdout, stderr, other);
     };
 
 
     // JSON serialization
 
-    WorkbookCell.prototype.fromJSON = function (data) {
+    CodeCell.prototype.fromJSON = function (data) {
         IPython.Cell.prototype.fromJSON.apply(this, arguments);
         if (data.cell_type === 'code') {
             if (data.input !== undefined) {
@@ -298,7 +298,7 @@ var IPython = (function (IPython) {
     };
 
 
-    WorkbookCell.prototype.toJSON = function () {
+    CodeCell.prototype.toJSON = function () {
         var data = IPython.Cell.prototype.toJSON.apply(this);
         data.input = this.get_text();
         data.cell_type = 'code';
@@ -313,7 +313,7 @@ var IPython = (function (IPython) {
     };
 
 
-    IPython.WorkbookCell = WorkbookCell;
+    IPython.CodeCell = CodeCell;
 
     return IPython;
 }(IPython));
