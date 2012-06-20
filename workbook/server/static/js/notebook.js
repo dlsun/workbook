@@ -1351,11 +1351,11 @@ var IPython = (function (IPython) {
             });
             
         }
-        // Create the kernel after the notebook is completely loaded to prevent
-        // code execution upon loading, which is a security risk.
+/* Don't allow the kernel to start
         if (! this.read_only) {
             this.start_kernel();
         }
+*/
         $([IPython.events]).trigger('notebook_loaded.Notebook');
     };
 
