@@ -20,7 +20,8 @@ window.mathjax_url = "http://cdn.mathjax.org/mathjax/latest/MathJax.js";
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css?v=63efb">
 <link rel="stylesheet" href="/static/codemirror/theme/ipython.css?v=fa49d">
 <link rel="stylesheet" href="/static/prettify/prettify.css?v=83f40"/>
-<link rel="stylesheet" href="/static/css/notebook.css?v=df7c8" type="text/css" />
+<link rel="stylesheet" href="/static/css/notebook.css?v=ae53c" type="text/css" />
+<link rel="stylesheet" href="/static/css/tooltip.css?v=7dac2" type="text/css" />
 <link rel="stylesheet" href="/static/css/renderedhtml.css?v=bdb28" type="text/css" />
 
 <script type='text/javascript'>
@@ -193,6 +194,8 @@ data-notebook-id=d2a50b38-3bbb-4b36-ad5a-1dfad9329e5c
 </div>
 </div>
 
+<div id='tooltip' class='tooltip ui-corner-all' style='display:none'></div>
+
 </div>
 <script src="/static/jquery/js/jquery-1.7.1.min.js?v=ddb84" type="text/javascript" charset="utf-8"></script>
 <script src="/static/jquery/js/jquery-ui.min.js?v=9fc86" type="text/javascript" charset="utf-8"></script>
@@ -211,23 +214,26 @@ data-notebook-id=d2a50b38-3bbb-4b36-ad5a-1dfad9329e5c
 <script src="/static/pagedown/Markdown.Converter.js?v=d2671" charset="utf-8"></script>
 <script src="/static/prettify/prettify.js?v=709bf" charset="utf-8"></script>
 <script src="/static/dateformat/date.format.js?v=3d6c9" charset="utf-8"></script>
-<script src="/static/js/events.js?v=6d70a" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/utils.js?v=d6b7b" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/events.js?v=eca28" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/utils.js?v=69c36" type="text/javascript" charset="utf-8"></script>
 <script src="/static/js/layoutmanager.js?v=a77bf" type="text/javascript" charset="utf-8"></script>
 <script src="/static/js/initmathjax.js?v=00faa" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/cell.js?v=c25bb" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/codecell.js?v=f9b28" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/workbookcell.js?v=f9b2" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/textcell.js?v=0fdfe" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/kernel.js?v=4e9f6" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/savewidget.js?v=618a8" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/quickhelp.js?v=15d60" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/pager.js?v=ada75" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/menubar.js?v=83456" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/outputarea.js?v=4df0d" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/cell.js?v=4f648" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/codecell.js?v=4860b" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/completer.js?v=2aad0" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/textcell.js?v=fe3c1" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/kernel.js?v=b53bb" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/savewidget.js?v=3d2c8" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/quickhelp.js?v=d1e2f" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/pager.js?v=6e665" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/menubar.js?v=79564" type="text/javascript" charset="utf-8"></script>
 <script src="/static/js/toolbar.js?v=2f74f" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/notebook.js?v=6b8e8" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/notificationwidget.js?v=9fd9b" type="text/javascript" charset="utf-8"></script>
-<script src="/static/js/notebookmain.js?v=59ed8" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/notebook.js?v=b35bc" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/notificationwidget.js?v=7e255" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/tooltip.js?v=4091d" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/notebookmain.js?v=4b64b" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/contexthint.js?v=ee0ce charset="utf-8"></script>
 
 </body>
 </html>

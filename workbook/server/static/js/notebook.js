@@ -579,7 +579,10 @@ var IPython = (function (IPython) {
                 cell.set_input_prompt();
             } else if (type === 'markdown') {
                 cell = new IPython.MarkdownCell();
-            } else if (type === 'html') {
+            } else if (type === 'workbook') {
+		cell = new IPython.WorkbookCell();
+		cell.read_only = true;
+	    } else if (type === 'html') {
                 cell = new IPython.HTMLCell();
             } else if (type === 'raw') {
                 cell = new IPython.RawCell();
