@@ -22,8 +22,10 @@ import numpy as np
 
 # Local imports
 
-from .questions import publish_workbook_metadata, question_types
-from cell_question import CellQuestion, MultipleChoiceCell, PracticeMultipleChoiceCell
+from cell_question import (CellQuestion, 
+                           MultipleChoiceCell, 
+                           PracticeMultipleChoiceCell,
+                           question_types)
 
 @magics_class
 class HomeworkMagics(Magics):
@@ -103,19 +105,6 @@ class HomeworkMagics(Magics):
         outputs = question.form_cell(seed, shell=self.shell)
         question_types[question.identifier] = question
 
-    @magic_arguments()
-    @argument(
-        'name_of_dict', 
-        type=str,
-        )
-    @line_magic
-    def wb_metadata(self, line):
-        """
-        Publish elements of a dictionary into workbook_metadata of the current cell
-        """
-        args = parse_argstring(self.wb_metadata, line)
-        metadata = self.shell.user_ns[args.name_of_dict]
-        publish_workbook_metadata(metadata)
 
 # register the magic
 
@@ -125,3 +114,9 @@ ip.register_magics(hwmagic)
 
 def wb_latex(text):
     publish_display_data("HomeworkMagic", {'text/latex':text})
+
+def publish_workbook_metadata(metadata):
+    publish_display_data("HomeworkBuilder", 
+                         {"application/json":{"workbook_metadata":
+                                                  metadata}})
+
