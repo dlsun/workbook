@@ -42,20 +42,7 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
     @nbc.DocInherit
     def render_code(self, cell):
         output = find_and_merge_metadata(cell)
-        if (output is not None and 
-            'owner' in output.json['workbook_metadata'].keys() 
-            and output.json['workbook_metadata']['owner'] == 'workbook'):
-            cell.input = self.cipher.encrypt(cell.input)
-            for output in cell.outputs:
-                # don't encrypt the metadata
-                if hasattr(output, "json"):
-                    try:
-                        if 'workbook_metadata' not in output.json.keys():
-                            output.json = self.cipher.encrypt(json.dumps(output.json))
-                    except:
-                        output.json = self.cipher.encrypt(json.dumps(output.json))
-                        pass
-
+        cell.input = self.cipher.encrypt(cell.input)
         return nbc.ConverterNotebook.render_code(self, cell)
 
 class DecryptTeacherInfo(nbc.ConverterNotebook):
@@ -67,19 +54,7 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
     @nbc.DocInherit
     def render_code(self, cell):
         output = find_and_merge_metadata(cell)
-        if (output is not None and 
-            'owner' in output.json['workbook_metadata'].keys()
-            and output.json['workbook_metadata']['owner'] == 'workbook'):
-            cell.input = self.cipher.decrypt(cell.input)
-            for output in cell.outputs:
-                # don't encrypt the metadata
-                if hasattr(output, "json"):
-                    try:
-                        if 'workbook_metadata' not in output.json.keys():
-                            output.json = json.loads(self.cipher.decrypt(output.json))
-                    except:
-                        output.json = json.loads(self.cipher.decrypt(output.json))
-                        pass
+        cell.input = self.cipher.decrypt(cell.input)
         return nbc.ConverterNotebook.render_code(self, cell)
 
 if __name__ == "__main__":

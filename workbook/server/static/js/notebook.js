@@ -1234,7 +1234,7 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
-                if (cell_data.owner == 'workbook'){
+                if (cell_data.metadata.owner == 'workbook'){
                     cell_data.cell_type = 'workbook';
                 }
 
@@ -1276,13 +1276,11 @@ var IPython = (function (IPython) {
 	    if(form.value !== undefined) {
 		// is this necessary?
 		if(cell.metadata === undefined) {
-                     cell.metadata = {'identifier':null, 'value':null};
+                     cell.metadata = {'identifier':null, 'answer':null};
 		};
 		// pass the identifier and answer in the metadata
 		cell.metadata.identifier = form.name;
 		cell.metadata.answer = form.value;
-		alert(JSON.stringify(cell.metadata));
-
 		var settings = {
 		    processData : false,
 		    cache : false,
@@ -1306,7 +1304,6 @@ var IPython = (function (IPython) {
 	// insert new cell and delete old cell
 	new_cell = nb.insert_cell_below('workbook',i);
 	new_cell.fromJSON(new_cell_json);
-	new_cell.render();
 	nb.delete_cell(i);
 	// save the new cell
 	nb.save_notebook();

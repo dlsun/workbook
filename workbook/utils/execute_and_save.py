@@ -7,7 +7,7 @@ Usage: `ipnbdoctest.py foo.ipynb [bar.ipynb [...]]`
 Each cell is submitted to the kernel, and the outputs are compared with those stored in the notebook.
 """
 
-import os, sys, uuid
+import os, sys, uuid, json
 
 from Queue import Empty
 
@@ -15,6 +15,7 @@ from IPython.zmq.blockingkernelmanager import BlockingKernelManager
 from IPython.nbformat.current import reads, NotebookNode
 
 from workbook.external.nbconvert import ConverterNotebook
+from workbook.io import *
 
 def run_cell(cell_input):
     # print "\n\ntesting:"
@@ -70,7 +71,7 @@ km.start_channels()
 shell = km.shell_channel
 iopub = km.sub_channel
 
-def execute_notebook(nb):
+def execute_notebook(nb, header_input=''):
     # run %pylab inline, because some notebooks assume this
     # even though they shouldn't
     km.shell_channel.execute("pass")
@@ -91,6 +92,7 @@ def execute_notebook(nb):
             if cell.cell_type != 'code':
                 continue
             try:
+                run_cell(header_input)
                 outs = run_cell(cell.input)
             except Exception as e:
                 print "failed to run cell:", repr(e)
@@ -102,10 +104,12 @@ def execute_notebook(nb):
     # km.shutdown_kernel()
     # del km
 
-def execute_and_save(ipynb):
+def execute_and_save(ipynb, student_info):
+    seed = student_info['seed']
+    header_input = 'seed=%d' % seed
     converter = ConverterNotebook(ipynb, os.path.splitext(ipynb)[0] + '_executed')
     converter.read()
-    execute_notebook(converter.nb)    
+    execute_notebook(converter.nb, header_input=header_input)    
     return converter.render()
 
 

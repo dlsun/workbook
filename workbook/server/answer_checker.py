@@ -3,10 +3,7 @@
 import os, glob
 from workbook.converters import ConverterNotebook
 import IPython.nbformat.current as nbformat
-from workbook.utils.questions import (find_identified_cells,
-                                      find_identified_outputs,
-                                      question_types,
-                                      construct_question)
+from workbook.utils.questions import question_types
 from workbook.io import *
 
 from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
@@ -21,20 +18,9 @@ def initialize_shell():
                     shell.run_cell(cell.input)
     return shell
 
-def find_question_types():
-    shell = initialize_shell()
-    curdir = os.path.abspath(os.curdir)
-    shell.run_cell('import workbook.utils.questions as wq')
-    wq = shell.user_ns['wq']
-    nm = wq.question_types['normal_mean']('test',3,4,5)
-    os.chdir(curdir)
-    return wq.question_types
-
-def update_question_types():
-    question_types.update(find_question_types())
-
-def check_answer(cell, user, identifier, answer):
+def check_answer(cell, user):
     question = question_types[cell['metadata']['identifier']]
 
-    return question.check_answer(cell, user, answer)
-
+    cell = question.check_answer(cell, user)
+    cell.input = user['cipher'].encrypt(cell.input)
+    return cell

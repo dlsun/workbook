@@ -64,28 +64,29 @@ class StudentMetadata(nbc.ConverterNotebook):
         output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
-            setattr(cell, key, value)
+            #setattr(cell, key, value)
+            cell.metadata[key] = value
         return nbc.ConverterNotebook.render_heading(self, cell)
 
     def render_code(self, cell):
         output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
-            setattr(cell, key, value)
+            cell.metadata[key] = value
         return nbc.ConverterNotebook.render_code(self, cell)
 
     def render_markdown(self, cell):
         output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
-            setattr(cell, key, value)
+            cell.metadata[key] = value
         return nbc.ConverterNotebook.render_markdown(self, cell)
 
     def render_raw(self, cell):
         output = find_and_merge_metadata(cell) or self.default_output
         metadata = output.json['workbook_metadata']
         for key, value in metadata.items():
-            setattr(cell, key, value)
+            cell.metadata[key] = value
         return nbc.ConverterNotebook.render_raw(self, cell)
 
 class TAMetadata(StudentMetadata):
@@ -101,8 +102,9 @@ class RemoveMetadata(nbc.ConverterNotebook):
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
                 try:
-                    delattr(cell, key)
-                except AttributeError:
+                    #delattr(cell, key)
+                    del(cell.metadata[key])
+                except AttributeError, KeyError:
                     pass
         return nbc.ConverterNotebook.render_heading(self, cell)
 
@@ -112,7 +114,7 @@ class RemoveMetadata(nbc.ConverterNotebook):
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
                 try:
-                    delattr(cell, key)
+                    del(metadata[key])
                 except AttributeError:
                     pass
         return nbc.ConverterNotebook.render_code(self, cell)
@@ -123,7 +125,7 @@ class RemoveMetadata(nbc.ConverterNotebook):
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
                 try:
-                    delattr(cell, key)
+                    del(metadata[key])
                 except AttributeError:
                     pass
         return nbc.ConverterNotebook.render_markdown(self, cell)
@@ -134,7 +136,7 @@ class RemoveMetadata(nbc.ConverterNotebook):
             metadata = output.json['workbook_metadata']
             for key in metadata.keys():
                 try:
-                    delattr(cell, key)
+                    del(metadata[key])
                 except AttributeError:
                     pass
         return nbc.ConverterNotebook.render_raw(self, cell)

@@ -7,7 +7,7 @@ from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, 
 from workbook.converters.metadata import (StudentMetadata, RemoveMetadata)
 from workbook.converters import compose_converters
 
-from workbook.server.answer_checker import update_question_types, check_answer
+from workbook.server.answer_checker import check_answer, initialize_shell
 from workbook.utils.homework_creator import create_assignment
 from workbook.io import *
 
@@ -113,8 +113,8 @@ def forward(nb, filename, user, nbname):
     student = StudentMetadata(filename, 'student')
     
     # composition is right to left
-    # nb = compose_converters(nb, student, encrypt)
-    nb = compose_converters(nb, student)
+
+    nb = compose_converters(nb, student, encrypt)
     nb.metadata.name = nbname
 
     return nb
@@ -131,8 +131,7 @@ def reverse(nb, filename, user, nbname):
     rm_meta = RemoveMetadata(filename, 'rm_meta')
     
     # composition is right to left
-    # nb = compose_converters(nb, decrypt, rm_meta)
-    nb = compose_converters(nb, rm_meta)
+    nb = compose_converters(nb, decrypt, rm_meta)
     nb.metadata.name = nbname
 
     return nb
@@ -165,32 +164,17 @@ def check_nb_question(nbname):
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
 
-    if True:
-    # try:
-        import sys; sys.stderr.write(`request.json`+'\n')
-        identifier = request.json['metadata']['identifier']
-        answer = request.json['metadata']['answer']
-        # check_answer should return a JSON file containing the new cell 
-        cell = request.json
-        new_cell_json = check_answer(cell, user, identifier, {'answer':answer})
-        if hasattr(new_cell_json, 'cell_type'):
-            if new_cell_json['cell_type']=='workbook':
-                return json.dumps(new_cell_json)
-#        raise
-#     except Exception, err:
-#         import sys
-#         sys.stderr.write('ERROR: %s\n' % str(err))
-#         output = nbformat.new_output(output_type='display_data', output_html='<h2>Error: %s\n</h2>' % str(err))
-#         request.json['outputs'].append(output)
-#         request.json['cell_type'] = 'workbook'
-#         import sys; sys.stderr.write(`request.json`+'\n')
-#         return json.dumps(request.json)
-
+    identifier = request.json['metadata']['identifier']
+    answer = request.json['metadata']['answer']
+    # check_answer should return a JSON file containing the new cell 
+    cell = request.json
+    new_cell_json = check_answer(cell, user)
+    return json.dumps(new_cell_json)
 
 # start server
 
 def main():
-    update_question_types()
+    initialize_shell() # this loads all assignments into question_types so they can be checked later
     app.run(debug=True,host='0.0.0.0', use_reloader=True, use_debugger=True)
     #app.run(debug=False,host='0.0.0.0')
 
