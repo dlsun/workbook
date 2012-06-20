@@ -18,9 +18,11 @@ def initialize_shell():
                     shell.run_cell(cell.input)
     return shell
 
-def check_answer(cell, user):
-    question = question_types[cell['metadata']['identifier']]
+def check_answer(cell_dict, user):
+    question = question_types[cell_dict['metadata']['identifier']]
 
-    cell = question.check_answer(cell, user)
-    cell.input = user['cipher'].encrypt(cell.input)
+    cell = question.check_answer(cell_dict, user)
+    cell.input = user['cipher'].encrypt(cell['input'])
+    cell.cell_type = 'workbook'
+    import sys; sys.stderr.write(`cell`)
     return cell

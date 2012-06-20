@@ -17,12 +17,14 @@ from IPython.nbformat.current import reads, NotebookNode
 from workbook.external.nbconvert import ConverterNotebook
 from workbook.io import *
 
-def run_cell(cell_input):
+def run_cell(cell_input, user_variables=None, user_expressions=None):
     # print "\n\ntesting:"
     # print cell.input
-    shell.execute(cell_input)
+    returned_user_variables = {}
+    returned_user_expressions = {}
+    shell.execute(cell_input, user_variables=user_variables, user_expressions=user_expressions)
     # wait for finish, maximum 20s
-    shell.get_msg(timeout=20)
+    shell_msg = shell.get_msg(timeout=20)
     outs = []
     
     while True:
@@ -36,7 +38,7 @@ def run_cell(cell_input):
         elif msg_type == 'clear_output':
             outs = []
             continue
-        
+
         content = msg['content']
         # print msg_type, content
         out = NotebookNode(output_type=msg_type)
@@ -61,7 +63,12 @@ def run_cell(cell_input):
         
         outs.append(out)
 
-    return outs
+    if 'user_variables' in shell_msg['content'].keys():
+        returned_user_variables.update(shell_msg['content']['user_variables'])
+    if 'user_expressions' in shell_msg['content'].keys():
+        returned_user_expressions.update(shell_msg['content']['user_expressions'])
+
+    return outs, returned_user_variables, returned_user_expressions
     
 
 km = BlockingKernelManager()
@@ -93,7 +100,7 @@ def execute_notebook(nb, header_input=''):
                 continue
             try:
                 run_cell(header_input)
-                outs = run_cell(cell.input)
+                outs = run_cell(cell.input)[0]
             except Exception as e:
                 print "failed to run cell:", repr(e)
                 print cell.input
@@ -101,8 +108,6 @@ def execute_notebook(nb, header_input=''):
                 continue
             cell.outputs = outs
             prompt_number += 1
-    # km.shutdown_kernel()
-    # del km
 
 def execute_and_save(ipynb, student_info):
     seed = student_info['seed']

@@ -22,9 +22,9 @@ import numpy as np
 
 # Local imports
 
+from workbook.api import counter
 from cell_question import (CellQuestion, 
-                           MultipleChoiceCell, 
-                           PracticeMultipleChoiceCell,
+                           MultipleChoiceCell,
                            question_types)
 
 @magics_class
@@ -41,18 +41,27 @@ class HomeworkMagics(Magics):
         default=None,
         help='Random seed to set.'
         )
+    @argument(
+        '--practice', 
+        default=False,
+        action='store_true',
+        help='Should the question be a practice (i.e. regenerated over and over)'
+        )
     @cell_magic
     def wb_question(self, line, cell):
         "Generate a question after setting seed=seed+trial."
+        counter.next()
         args = parse_argstring(self.wb_question, line)
-        question = CellQuestion(cell, args.identifier)
+        question = CellQuestion(cell_input=cell, identifier=args.identifier)
+        question.shell = self.shell 
         question_types[args.identifier] = question
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
                 seed = int(self.shell.user_ns['seed'])
             else:
-                seed = 0
-        outputs = question.form_cell(seed, shell=self.shell)
+                seed = 2
+        question.seed = seed
+        cell = question.form_cell(seed, shell=self.shell)
         question_types[question.identifier] = question
 
     @line_cell_magic
@@ -72,39 +81,24 @@ class HomeworkMagics(Magics):
         The check_answer just returns whether answer['answer'] == correct_answer
         
         """
+        counter.next()
         args = parse_argstring(self.wb_question, line)
-        question = MultipleChoiceCell(cell, args.identifier)
+        question = MultipleChoiceCell(cell_input=cell, identifier=args.identifier, practice=args.practice)
+        question.shell = self.shell 
         question_types[args.identifier] = question
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
                 seed = int(self.shell.user_ns['seed'])
             else:
-                seed = 0
-
-        outputs = question.form_cell(seed, shell=self.shell)
+                seed = 2
+        question.seed = seed
+        cell = question.form_cell(seed)
         question_types[question.identifier] = question
 
     @cell_magic
-    def wb_multiple_choice_practice(self, line, cell):
-        """
-        Create a multiple CellQuestion. The cell
-        must have variables 'choices' and 'correct_answer' defined.
-
-        The check_answer just returns whether answer['answer'] == correct_answer
-        
-        """
-        args = parse_argstring(self.wb_question, line)
-        question = PracticeMultipleChoiceCell(cell, args.identifier)
-        question_types[args.identifier] = question
-        if args.seed is None:
-            if 'seed' in self.shell.user_ns:
-                seed = int(self.shell.user_ns['seed'])
-            else:
-                seed = 0
-
-        outputs = question.form_cell(seed, shell=self.shell)
-        question_types[question.identifier] = question
-
+    def wb_true_false(self, line, cell):
+        cell += "\nchoices=['True', 'False']\n"
+        self.wb_multiple_choice(line, cell)
 
 # register the magic
 
