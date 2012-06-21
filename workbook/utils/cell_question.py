@@ -1,4 +1,5 @@
 import json
+from md5 import md5
 from workbook.io import *
 from IPython.utils import traitlets as traits
 
@@ -18,11 +19,10 @@ class CellQuestion(traits.HasTraits):
     cell_input = traits.Unicode
     identifier = traits.Unicode
     seed = traits.Int
-    user_id = traits.Unicode
-    user_name = traits.Unicode
     number = traits.Int
+    shell = traits.Any(None)
+    md5 = traits.Unicode
 
-    outputs = traits.List
     num_outputs = traits.Int(1) # how many outputs does the answer checking form
 
     comments = traits.Dict({True:"<h2> Good job. Points: %(points)d / %(max_points)d </h2>",
@@ -39,13 +39,22 @@ class CellQuestion(traits.HasTraits):
 
     def __init__(self, **kw):
         self.on_trait_change(self.update_seed, ['seed'])
+        self.on_trait_change(self.set_md5, ['cell_input', 'identifier'])
         traits.HasTraits.__init__(self, **kw)
+
+    def _shell_changed(self):
+        run_cell('\n'.join(['%load_ext rmagic',
+                            'from IPython.core.displaypub import publish_display_data',
+                            'import numpy as np, random, json']),
+                 shell=self.shell)
+
+    def set_md5(self):
+        h = md5()
+        h.update(self.cell_input + self.identifier)
+        self.md5 = h.hexdigest()
 
     def update_seed(self):
         cell_input = '\n'.join(['seed=%d' % self.seed,
-                                '%load_ext rmagic',
-                                'from IPython.core.displaypub import publish_display_data',
-                                'import numpy as np, random, json',
                                 'np.random.seed(seed); random.seed(seed)',
                                 '%R -i seed set.seed(seed); rm(seed)', ''])
         run_cell(cell_input, shell=self.shell)
@@ -197,6 +206,7 @@ class MultipleChoiceCell(CellQuestion):
         cell = nbformat.new_code_cell(input=self.cell_input, outputs=outputs +
                                       form_outputs,
                                       metadata=metadata)
+        cell.metadata['md5'] = self.md5
         return cell
 
 
