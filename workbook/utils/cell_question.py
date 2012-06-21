@@ -87,6 +87,11 @@ class CellQuestion(traits.HasTraits):
         new_cell.metadata.update(cell.metadata)
         cell = new_cell
 
+        # append the answer to the answer history
+
+        cell.metadata.setdefault('answer_history', [])
+        cell.metadata['answer_history'].append(cell.metadata['answer'])
+
         correct_answer = self.answer_buffer[seed]
 
         correct = cell.metadata['answer'] == correct_answer
