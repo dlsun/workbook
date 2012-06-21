@@ -23,6 +23,12 @@ class CellQuestion(traits.HasTraits):
     shell = traits.Any(None)
     md5 = traits.Unicode
 
+    # the different outputs
+
+    cell_outputs = traits.List
+    form_outputs = traits.List
+    comment_outputs = traits.List
+
     num_outputs = traits.Int(1) # how many outputs does the answer checking form
 
     comments = traits.Dict({True:"<h2> Good job. Points: %(points)d / %(max_points)d </h2>",
@@ -40,6 +46,7 @@ class CellQuestion(traits.HasTraits):
     def __init__(self, **kw):
         self.on_trait_change(self.update_seed, ['seed'])
         self.on_trait_change(self.set_md5, ['cell_input', 'identifier'])
+        self.on_trait_change(self.generate_cell_outputs, ['seed'])
         traits.HasTraits.__init__(self, **kw)
 
     def _shell_changed(self):
@@ -59,17 +66,20 @@ class CellQuestion(traits.HasTraits):
                                 '%R -i seed set.seed(seed); rm(seed)', ''])
         run_cell(cell_input, shell=self.shell)
 
+    def generate_cell_outputs(self):
+        self.cell_outputs, variables = run_cell(self.cell_input, 
+                                                user_variables=['correct_answer'],
+                                                shell=self.shell)[:2]
+        # store the correct answer for checking later
+        # need to manage the size of the answer_buffer
+        self.answer_buffer[self.seed] = eval(variables['correct_answer'])
+
+
     def form_cell(self, seed, metadata={}):
         self.seed = seed; self.update_seed()
         if 'answer' in metadata:
             self.answer = metadata['answer']
-        outputs, variables = run_cell(self.cell_input, 
-                                      user_variables=['correct_answer'],
-                                      shell=self.shell)[:2]
-        # store the correct answer for checking later
-        # need to manage the size of the answer_buffer
-        self.answer_buffer[self.seed] = variables['correct_answer']
-
+            
     def check_answer(self, cell_dict, user):
         cell = nbformat.NotebookNode(**cell_dict)
         seed = json.load(open(os.path.join(PATH_TO_HW_FILES,
@@ -165,22 +175,40 @@ class MultipleChoiceCell(CellQuestion):
     answer = traits.Unicode
 
     def __init__(self, **kw):
-        self.setup_handlers()
         CellQuestion.__init__(self, **kw)
-
-    def setup_handlers(self):
-        self.on_trait_change(self.generate_form_input, ['answer', 'choices',
+        self.on_trait_change(self.generate_cell_outputs, ['seed'])
+        self.on_trait_change(self.generate_form_input, ['answer', 
+                                                        'choices',
                                                         'identifier'])
+        self.on_trait_change(self.generate_form_outputs, ['form'])
+        self.on_trait_change(self.generate_comment_outputs, ['answer'])
+        self.setup_handlers()
+
+    def generate_cell_outputs(self):
+        # store the correct answer for checking later
+        # need to manage the size of the answer_buffer
+        self.cell_outputs, variables = \
+            run_cell(self.cell_input, 
+                     user_variables=['correct_answer',
+                                     'choices',
+                                     'question_text'], 
+                     shell=self.shell)[:2]
+
+        self.choices = eval(variables['choices'])
+        self.answer_buffer[seed] = eval(variables['correct_answer'])
 
     def generate_form_input(self):
-        checked = self.answer
+        if self.answer:
+            checked = self.answer
+        else:
+            checked = ''
         choices = self.choices
 
         d = {'identifier': self.identifier }
         buttons = []
         for choice in choices:
             d['value'] = choice
-            if choice == checked and checked is not None:
+            if choice == checked and checked:
                 buttons.append("""<p><input type="radio" name="%(identifier)s" value="%(value)s" id="%(value)s" checked="checked"> %(value)s</p>""" % d)
             else:
                 buttons.append("""<p><input type="radio" name="%(identifier)s" value="%(value)s" id="%(value)s"> %(value)s</p>""" % d)
@@ -190,21 +218,15 @@ class MultipleChoiceCell(CellQuestion):
                                 "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % radio_code]) 
         self.form = form_input
 
+    def generate_form_outputs(self):
+        self.form_outputs = run_cell(self.form,
+                                     shell=self.shell)[0]
+        
     def form_cell(self, seed, metadata={}, shell=None):
         self.seed = seed; self.update_seed()
-        outputs, variables = run_cell(self.cell_input, 
-                                     user_variables=['correct_answer',
-                                                     'choices',
-                                                     'question_text'], shell=self.shell)[:2]
-
-        # store the choices and correct answer for checking later
-
-        self.choices = eval(variables['choices'])
-        self.answer_buffer[seed] = eval(variables['correct_answer'])
-        form_outputs = run_cell(self.form,
-                                shell=self.shell)[0]
-        cell = nbformat.new_code_cell(input=self.cell_input, outputs=outputs +
-                                      form_outputs,
+        cell = nbformat.new_code_cell(input=self.cell_input, 
+                                      outputs=self.cell_outputs +
+                                      self.form_outputs,
                                       metadata=metadata)
         cell.metadata['md5'] = self.md5
         return cell
