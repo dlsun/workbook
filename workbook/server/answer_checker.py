@@ -19,7 +19,7 @@ def initialize_shell():
     return shell
 
 def check_answer(cell_dict, user):
-    question = question_types[cell_dict['metadata']['identifier']]
+    question = question_types[(cell_dict['metadata']['identifier'], user['id'])]
 
     import sys; sys.stderr.write('\n\n' + 'input cell input: ' + `cell_dict['input']` + '\n\n')
     cell = question.check_answer(cell_dict, user)

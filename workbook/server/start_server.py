@@ -156,7 +156,7 @@ def save_nb(nbname):
     filename = os.path.join(user_folder(user), nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
     nbformat.write(nb, open(filename, 'wb'), 'json')
-    import sys; sys.stderr.write('\nnb: ' + nbformat.writes(nb, 'json') + '\n')
+    # import sys; sys.stderr.write('\nnb: ' + nbformat.writes(nb, 'json') + '\n')
     nb = reverse(nb, filename, user, nbname)
     nbformat.write(nb, open(filename, 'wb'), 'json')
     
@@ -173,7 +173,7 @@ def check_nb_question(nbname):
     # check_answer should return a JSON file containing the new cell 
     cell = request.json
     new_cell_json = check_answer(cell, user)
-    import sys; sys.stderr.write('\nnb: ' + json.dumps(new_cell_json) + '\n')
+    # import sys; sys.stderr.write('\nnb: ' + json.dumps(new_cell_json) + '\n')
     return json.dumps(new_cell_json)
 
 # start server

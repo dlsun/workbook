@@ -111,7 +111,7 @@ def execute_notebook(nb, header_input=''):
 
 def execute_and_save(ipynb, student_info):
     seed = student_info['seed']
-    header_input = 'seed=%d' % seed
+    header_input = 'seed=%d; user_id="%s"' % (seed, student_info['id'])
     converter = ConverterNotebook(ipynb, os.path.splitext(ipynb)[0] + '_executed')
     converter.read()
     execute_notebook(converter.nb, header_input=header_input)    
