@@ -10,8 +10,6 @@ BLOCK_SIZE = 16
 KEY_SIZE = 16
 AES.block_size = BLOCK_SIZE
 
-from metadata import find_and_merge_metadata
-
 class Cipher(object):
     
     def __init__(self, key, iv):
