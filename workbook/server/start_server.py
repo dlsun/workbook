@@ -170,7 +170,7 @@ def save_nb(nbname):
 @app.route('/hw/<nbname>/check', methods=['POST'])
 def check_nb_question(nbname):
     user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+    filename = os.path.join(user_folder(user), nbname + '.ipynb')
 
     identifier = request.json['metadata']['identifier']
     answer = request.json['metadata']['answer']
@@ -183,7 +183,7 @@ def check_nb_question(nbname):
 @app.route('/hw/<nbname>/grade', methods=['POST'])
 def grade_nb_question(nbname):
     user = check_user(request)
-    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+    filename = os.path.join(user_folder(user), nbname + '.ipynb')
 
     identifier = request.json['metadata']['identifier']
     answer = request.json['metadata']['answer']
@@ -192,6 +192,21 @@ def grade_nb_question(nbname):
     grades, new_cell_json = get_grades(cell, user)
     import sys; sys.stderr.write('\ngrades: ' + `grades` + '\n')
     return json.dumps(new_cell_json)
+
+# grade a specific question in the notebook
+@app.route('/hw/<nbname>/gradebook', methods=['PUT'])
+def grade_nb(nbname):
+    user = check_user(request)
+    filename = os.path.join(user_folder(user), nbname+".ipynb")
+    nb = nbformat.reads(request.data, 'json')
+    grades = []
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            if (hasattr(cell, 'input') and hasattr(cell, 'metadata') and 
+                'identifier' in cell.metadata):
+                grades.append(get_grades(cell, user)[0])
+    import sys; sys.stderr.write('\ngrades: ' + `grades` + '\n')
+    return request.data
 
 
 def initialize_shell():

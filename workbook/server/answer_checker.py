@@ -19,7 +19,10 @@ def flush_buffer(question_instances):
             del(question_instances[k])
 
 def get_question(cell, user):
-    tag = (cell.metadata['identifier'], user['id'])
+    try:
+        tag = (cell.metadata['identifier'], user['id'])
+    except (KeyError, AttributeError):
+        return None
 
     if tag not in question_instances:
         # generate the question on the fly
@@ -41,21 +44,26 @@ def check_answer(cell_dict, user):
     cell = nbformat.NotebookNode(**cell_dict)
     question = get_question(cell, user)
 
-    cell = question.check_answer(cell_dict)
-    cell.input = user['cipher'].encrypt(cell['input'])
-    cell.metadata['input_encrypted'] = True
-    cell.cell_type = 'workbook'
+    if question is not None:
+        cell = question.check_answer(cell_dict)
+        cell.input = user['cipher'].encrypt(cell.input)
+        cell.metadata['input_encrypted'] = True
+        cell.cell_type = 'workbook'
 
     return cell
 
 def get_grades(cell_dict, user):
-    cell = nbformat.NotebookNode(**cell_dict)
-    cell.input = user['cipher'].encrypt(cell['input'])
-    cell.metadata['input_encrypted'] = True
-    cell.cell_type = 'workbook'
-
-    question = get_question(cell, user)
-    if 'md5' in cell.metadata and question.validate_md5(cell.metadata['md5']):
-        return ((question.number, question.metadata['points'], question.metadata['max_points']), cell)
+    if type(cell_dict) == type({}):
+        cell = nbformat.NotebookNode(**cell_dict)
     else:
-        return ((None, None, None), cell)
+        cell = cell_dict
+    question = get_question(cell, user)
+
+    if question is not None:
+        cell.input = user['cipher'].encrypt(cell.input)
+        cell.metadata['input_encrypted'] = True
+        cell.cell_type = 'workbook'
+
+        if 'md5' in cell.metadata and question.validate_md5(cell.metadata['md5']):
+            return ((question.number, question.metadata['points'], question.metadata['max_points']), cell)
+    return ((None, None, None), cell)
