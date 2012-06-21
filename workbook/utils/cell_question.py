@@ -19,8 +19,6 @@ class CellQuestion(traits.HasTraits):
     answer_buffer = traits.Dict
     cell_input = traits.Unicode
     identifier = traits.Unicode
-    metadata = traits.Dict({'owner':'workbook',
-                            'user':'teacher'})
     seed = traits.Int
     trial_number = traits.Int
     user_id = traits.Unicode
@@ -51,7 +49,6 @@ class CellQuestion(traits.HasTraits):
         run_cell(cell_input, shell=self.shell)
 
     def form_cell(self, seed, metadata={}):
-        self.metadata.update(metadata)
         self.seed = seed 
         if 'answer' in metadata:
             self.answer = metadata['answer']
@@ -122,6 +119,29 @@ class CellQuestion(traits.HasTraits):
                 cell.outputs += html_outputs(self.shell, self.practice_comments[correct] % cell.metadata) 
         return cell
 
+class TAGrade(CellQuestion):
+
+    def form_cell(self, seed, metadata={}):
+        outputs, cell_metadata = run_cell(self.cell_input, 
+                                          user_variables=['comments',
+                                                          'points',
+                                                          'max_points'],
+                                          shell=self.shell)[:2]
+        for key, value in cell_metadata.items():
+            cell_metadata[key] = eval(value)
+        comment_outputs = html_outputs(self.shell, '''<h3>%(comments)s\nPoints: %(points)d/%(max_points)d</h3>''' % cell_metadata)
+        cell_metadata['identifier'] = self.identifier
+        import sys; sys.stderr.write(`outputs+comment_outputs`)
+        cell = nbformat.new_code_cell(input=self.cell_input,
+                                      outputs=outputs + comment_outputs,
+                                      metadata=cell_metadata)
+        import sys; sys.stderr.write(`cell`)
+        return cell
+
+    def check_answer(self, cell_dict, user):
+        cell = nbformat.NotebookNode(**cell_dict)
+        return_cell
+
 class MultipleChoiceCell(CellQuestion):
 
     question_text = traits.Unicode
@@ -176,8 +196,8 @@ class MultipleChoiceCell(CellQuestion):
 
 
 def html_outputs(shell, *raw_html_bits):
-    return run_cell('\n'.join(["""publish_display_data("CellQuestion", {"text/html":"%s"})""" % raw_html for raw_html in raw_html_bits]), shell=shell)[0]
+    return run_cell('\n'.join(["""publish_display_data("CellQuestion", {"text/html":'''%s'''})""" % raw_html for raw_html in raw_html_bits]), shell=shell)[0]
 
 def latex_outputs(shell, *raw_latex_bits):
-    return run_cell('\n'.join(["""publish_display_data("CellQuestion", {"text/latex":r"%s"})""" % raw_latex for raw_latex in raw_latex_bits]), shell=shell)[0]
+    return run_cell('\n'.join(["""publish_display_data("CellQuestion", {"text/latex":r'''%s'''})""" % raw_latex for raw_latex in raw_latex_bits]), shell=shell)[0]
 

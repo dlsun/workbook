@@ -25,6 +25,7 @@ import numpy as np
 from workbook.api import counter
 from cell_question import (CellQuestion, 
                            MultipleChoiceCell,
+                           TAGrade,
                            question_types)
 
 @magics_class
@@ -61,16 +62,26 @@ class HomeworkMagics(Magics):
             else:
                 seed = 2
         question.seed = seed
-        cell = question.form_cell(seed, shell=self.shell)
+        cell = question.form_cell(seed)
         question_types[question.identifier] = question
 
     @line_cell_magic
-    def wb_latex(self, line, cell=None):
+    def wb_grade_cell(self, line, cell=None):
         "Publish some latex."
 
         if cell is None:
             cell = ''
-        publish_display_data("HomeworkMagic", {'text/latex':line + '\n' + cell})
+
+        args = parse_argstring(self.wb_question, line)
+        grade = TAGrade(cell_input=cell, identifier=args.identifier)
+        grade.shell = self.shell 
+        if args.seed is None:
+            if 'seed' in self.shell.user_ns:
+                seed = int(self.shell.user_ns['seed'])
+            else:
+                seed = 2
+        grade.seed = seed
+        cell = grade.form_cell(seed)
 
     @cell_magic
     def wb_multiple_choice(self, line, cell):
