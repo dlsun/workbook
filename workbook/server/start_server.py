@@ -2,11 +2,12 @@ from flask import Flask, render_template, request
 import os, shutil, glob, json, tempfile
 
 from IPython.nbformat import current as nbformat
+from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.metadata import set_group
 
-from workbook.server.answer_checker import check_answer, initialize_shell
+from workbook.server.answer_checker import check_answer, get_grades
 from workbook.utils.homework_creator import create_assignment
 from workbook.io import *
 
@@ -69,7 +70,10 @@ def index():
 def generate_student(user):
     #StudentCreator(user['id'], user['name']).render()
     folder = user_folder(user)
-    os.makedirs(folder)
+    try:
+        os.makedirs(folder)
+    except OSError:
+        pass
 
     # make encryption data
 
@@ -173,13 +177,38 @@ def check_nb_question(nbname):
     # check_answer should return a JSON file containing the new cell 
     cell = request.json
     new_cell_json = check_answer(cell, user)
-    # import sys; sys.stderr.write('\nnb: ' + json.dumps(new_cell_json) + '\n')
     return json.dumps(new_cell_json)
+
+# grade a specific question in the notebook
+@app.route('/hw/<nbname>/grade', methods=['POST'])
+def grade_nb_question(nbname):
+    user = check_user(request)
+    filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
+
+    identifier = request.json['metadata']['identifier']
+    answer = request.json['metadata']['answer']
+    # check_answer should return a JSON file containing the new cell 
+    cell = request.json
+    grades, new_cell_json = get_grades(cell, user)
+    import sys; sys.stderr.write('\ngrades: ' + `grades` + '\n')
+    return json.dumps(new_cell_json)
+
+
+def initialize_shell():
+    generate_student({'id':'server', 'name':'Workbook Server'})
+    shell = TerminalInteractiveShell()
+    for ipynb in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES, '*ipynb')):
+        nb = nbformat.read(open(ipynb, 'rb'), 'json')
+        for ws in nb.worksheets:
+            for cell in ws.cells:
+                if hasattr(cell, 'input'):
+                    shell.run_cell(cell.input)
+    return shell
 
 # start server
 
 def main():
-    initialize_shell() # this loads all assignments into question_types so they can be checked later
+    initialize_shell() # this loads all assignments into question_types so they can be regenerated as instances later
     app.run(debug=True,host='0.0.0.0', use_reloader=True, use_debugger=True)
     #app.run(debug=False,host='0.0.0.0')
 

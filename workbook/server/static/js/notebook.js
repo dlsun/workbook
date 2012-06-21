@@ -104,6 +104,10 @@ var IPython = (function (IPython) {
 		// Shift-c
                 that.check_cell(that.get_selected_cell());
                 return false;
+            } else if (event.which === 71 && event.shiftKey) {
+		// Shift-g
+                that.grade_cell(that.get_selected_cell());
+                return false;
             } else if (event.which === 88 && that.control_key_active) {
                 // Cut selected cell = x
                 that.cut_cell();
@@ -1316,6 +1320,29 @@ var IPython = (function (IPython) {
 	window.alert(error_msg);
         $([IPython.events]).trigger('notebook_save_failed.Notebook');
     };
+
+   // this passes a cell JSON to the server to print the grades to stderr for now
+   Notebook.prototype.grade_cell = function (cell) {
+	form = cell.element.find('form')[0];
+	if(form !== undefined) {
+	    if(form.value !== undefined) {
+		var settings = {
+		    processData : false,
+		    cache : false,
+		    type : "POST",
+		    data : JSON.stringify(cell),
+		    headers : {'Content-Type': 'application/json'},
+		    dataType : "json", // output data
+		    contentType: 'application/json;charset=UTF-8',
+ 		    success : $.proxy(this.check_cell_success,cell), // why cell here? will this be the returned value? it should be
+ 		    error : $.proxy(this.check_cell_error,this)
+		};
+		var url = '/hw/' + this.notebook_name  + '/grade' // server will determine question to check from the JSON
+		$.ajax(url, settings);	
+	    }
+	}	
+    }
+
 
     Notebook.prototype.save_notebook = function () {
         // We may want to move the name/id/nbformat logic inside toJSON?

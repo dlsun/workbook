@@ -2,6 +2,7 @@ import json
 
 from ..external import nbconvert as nbc
 import base64
+from md5 import md5
 
 # pycrypto tools
 

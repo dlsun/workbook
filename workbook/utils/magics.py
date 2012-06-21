@@ -26,7 +26,8 @@ from workbook.api import counter
 from cell_question import (CellQuestion, 
                            MultipleChoiceCell,
                            TAGrade,
-                           question_types)
+                           question_types, 
+                           question_instances)
 
 @magics_class
 class HomeworkMagics(Magics):
@@ -44,7 +45,7 @@ class HomeworkMagics(Magics):
         )
     @argument(
         '--user_id', 
-        default='testing',
+        default='server',
         help='Default user.'
         )
     @argument(
@@ -77,7 +78,8 @@ class HomeworkMagics(Magics):
         question.seed = seed
 
         cell = question.form_cell(seed)
-        question_types[(args.identifier, question.user_id)] = question
+        question_types[args.identifier] = question
+        question_instances[(args.identifier, question.user_id)] = question
 
     @line_cell_magic
     def wb_grade_cell(self, line, cell=None):
@@ -128,8 +130,8 @@ class HomeworkMagics(Magics):
                 seed = 2
         question.seed = seed
         cell = question.form_cell(seed)
-        question_types[(args.identifier, question.user_id)] = question
-
+        question_types[args.identifier] = question
+        question_instances[(args.identifier, question.user_id)] = question
 
     @cell_magic
     def wb_true_false(self, line, cell):
