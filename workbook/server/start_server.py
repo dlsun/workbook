@@ -4,7 +4,7 @@ import os, shutil, glob, json, tempfile
 from IPython.nbformat import current as nbformat
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
-from workbook.converters.metadata import (StudentMetadata, RemoveMetadata)
+from workbook.converters.metadata import set_group
 from workbook.converters import compose_converters
 
 from workbook.server.answer_checker import check_answer, initialize_shell
@@ -14,8 +14,6 @@ from workbook.io import *
 # for constructing the encryption key, iv
 
 import random, base64
-
-counter = 0
 
 app = Flask(__name__)
 
@@ -38,6 +36,13 @@ def check_user(request):
     if not os.path.exists(folder):
         generate_student(user)
     set_student_cipher(user)
+
+    if user_id in teachers:
+        user['group'] = 'teacher'
+    elif user_id in tas:
+        user['group'] = 'ta'
+    else:
+        user['group'] = 'student'
     return user
 
 def user_folder(user):
@@ -58,7 +63,7 @@ def index():
     nb_files = glob.glob(os.path.join(folder, '*ipynb'))
     nbs = [ nbformat.read(open(nb_file, 'rb'), 'json') for nb_file in nb_files ]
     # strip folder from the filename
-    nb_files = [ os.path.split(path)[1] for path in nb_files ]
+    nb_files = [os.path.split(path)[1] for path in nb_files ]
 
     return render_template('index.html',user = user, nb_files=nb_files, nbs=nbs)
 
@@ -107,16 +112,16 @@ def forward(nb, filename, user, nbname):
 
     """
 
-    # filenames of converters will be adjusted by  compose_converters
+    # first add the teacher workbook info
 
     encrypt = EncryptTeacherInfo(filename, 'encrypt', user['cipher']) 
-    student = StudentMetadata(filename, 'student')
-    
-    # composition is right to left
+    encrypt.render()
+    os.rename('encrypt.ipynb', filename)
 
-    nb = compose_converters(nb, student, encrypt)
+    nb = nbformat.read(open(filename, 'rb'), 'json')
     nb.metadata.name = nbname
-
+    nbformat.write(nb, open(filename, 'wb'), 'json')
+ 
     return nb
 
 
@@ -128,18 +133,19 @@ def reverse(nb, filename, user, nbname):
     # filenames of converters will be adjusted by  compose_converters
 
     decrypt = DecryptTeacherInfo(filename, 'decrypt', user['cipher']) 
-    rm_meta = RemoveMetadata(filename, 'rm_meta')
-    
-    # composition is right to left
-    nb = compose_converters(nb, decrypt, rm_meta)
-    nb.metadata.name = nbname
+    decrypt.render()
+    os.rename('decrypt.ipynb', filename)
 
+#    owner = set_group(filename, 'owner', user['group'])
+#    owner.render()
+#    os.rename('owner.ipynb', filename)
+    
+    nb = nbformat.read(open(filename, 'rb'), 'json')
     return nb
 
 # load the JSON file of the notebook
 @app.route('/hw/<nbname>/load', methods=['GET'])
 def load_nb(nbname):
-    global counter
     user = check_user(request)
     filename = os.path.join(user_folder(user), nbname + '.ipynb')
     nb = nbformat.read(open(filename, 'rb'), 'json')
@@ -149,18 +155,19 @@ def load_nb(nbname):
 # save the JSON file of the notebook
 @app.route('/hw/<nbname>/save', methods=['PUT'])
 def save_nb(nbname):
-    global counter
     user = check_user(request)
     filename = os.path.join(user_folder(user), nbname+".ipynb")
     nb = nbformat.reads(request.data, 'json')
+    nbformat.write(nb, open(filename, 'wb'), 'json')
+    import sys; sys.stderr.write('\nnb: ' + nbformat.writes(nb, 'json') + '\n')
     nb = reverse(nb, filename, user, nbname)
     nbformat.write(nb, open(filename, 'wb'), 'json')
+    
     return request.data
 
 # check a specific question in the notebook
 @app.route('/hw/<nbname>/check', methods=['POST'])
 def check_nb_question(nbname):
-    global counter
     user = check_user(request)
     filename = os.path.join(PATH_TO_HW_FILES, user['id'], nbname + '.ipynb')
 
@@ -169,6 +176,7 @@ def check_nb_question(nbname):
     # check_answer should return a JSON file containing the new cell 
     cell = request.json
     new_cell_json = check_answer(cell, user)
+    import sys; sys.stderr.write('\nnb: ' + json.dumps(new_cell_json) + '\n')
     return json.dumps(new_cell_json)
 
 # start server

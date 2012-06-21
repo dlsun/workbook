@@ -1,7 +1,7 @@
 import tempfile, os
 import IPython.nbformat.current as nbformat
 
-from metadata import AddMetadata
+from metadata import AddMetadata, set_group
 
 from ..external.nbconvert import ConverterNotebook, Converter
 

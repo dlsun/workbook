@@ -41,8 +41,11 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        output = find_and_merge_metadata(cell)
-        cell.input = self.cipher.encrypt(cell.input)
+        if cell.input and cell.metadata['group'] == 'teacher':
+            cell.metadata.setdefault('input_encrypted', False)
+            if cell.metadata['input_encrypted'] == False:
+                cell.input = self.cipher.encrypt(cell.input)
+                cell.metadata['input_encrypted'] = True
         return nbc.ConverterNotebook.render_code(self, cell)
 
 class DecryptTeacherInfo(nbc.ConverterNotebook):
@@ -53,8 +56,12 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        output = find_and_merge_metadata(cell)
-        cell.input = self.cipher.decrypt(cell.input)
+        if cell.input and cell.metadata['group'] == 'teacher':
+            #import sys; sys.stderr.write('decrpyt: ' + `cell` + '\n')
+            cell.metadata.setdefault('input_encrypted', False)
+            if cell.metadata['input_encrypted'] == True:
+                cell.input = self.cipher.decrypt(cell.input)
+                cell.metadata['input_encrypted'] = False
         return nbc.ConverterNotebook.render_code(self, cell)
 
 if __name__ == "__main__":

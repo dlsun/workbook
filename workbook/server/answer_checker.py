@@ -21,8 +21,10 @@ def initialize_shell():
 def check_answer(cell_dict, user):
     question = question_types[cell_dict['metadata']['identifier']]
 
+    import sys; sys.stderr.write('\n\n' + 'input cell input: ' + `cell_dict['input']` + '\n\n')
     cell = question.check_answer(cell_dict, user)
     cell.input = user['cipher'].encrypt(cell['input'])
+    cell.metadata['input_encrypted'] = True
     cell.cell_type = 'workbook'
-    import sys; sys.stderr.write(`cell`)
+    import sys; sys.stderr.write('\n\n' + 'return cell input: ' + `cell.input`+ '\n\n')
     return cell

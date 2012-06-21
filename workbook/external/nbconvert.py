@@ -169,6 +169,12 @@ class Converter(object):
         """
         return getattr(self, 'render_display_format_' + format, self.render_unknown)
 
+    def preprocess(self, cell):
+        """
+        Do something to a cell before rendering.
+        """
+        return cell
+
     def convert(self, cell_separator='\n'):
         lines = []
         lines.extend(self.optional_header())
@@ -176,6 +182,7 @@ class Converter(object):
         for worksheet in self.nb.worksheets:
             for cell in worksheet.cells:
                 #print(cell.cell_type)  # dbg
+                self.preprocess(cell)
                 conv_fn = self.dispatch(cell.cell_type)
                 if cell.cell_type in ('markdown', 'raw'):
                     remove_fake_files_url(cell)

@@ -1,4 +1,4 @@
-import json, datetime, time
+import json
 from workbook.io import *
 from IPython.utils import traitlets as traits
 
@@ -12,20 +12,18 @@ def run_cell(cell_input, shell=None, user_variables=[]):
         shell.run_cell(cell_input)
     return km_run_cell(cell_input, user_variables=user_variables)
 
-hour = datetime.datetime(2012,6,20,13,0,0)-datetime.datetime(2012,6,20,12,0,0)
-
 class CellQuestion(traits.HasTraits):
 
     answer_buffer = traits.Dict
     cell_input = traits.Unicode
     identifier = traits.Unicode
     seed = traits.Int
-    trial_number = traits.Int
     user_id = traits.Unicode
     user_name = traits.Unicode
+    number = traits.Int
 
     outputs = traits.List
-    num_outputs = traits.Int(1)#  # how many outputs does the answer checking form
+    num_outputs = traits.Int(1) # how many outputs does the answer checking form
 
     comments = traits.Dict({True:"<h2> Good job. Points: %(points)d / %(max_points)d </h2>",
                             False:"<h2> Try again. Points: %(points)d / %(max_points)d</h2>"})
@@ -39,7 +37,11 @@ class CellQuestion(traits.HasTraits):
 
     practice = traits.Bool(False)
 
-    def _seed_changed(self):
+    def __init__(self, **kw):
+        self.on_trait_change(self.update_seed, ['seed'])
+        traits.HasTraits.__init__(self, **kw)
+
+    def update_seed(self):
         cell_input = '\n'.join(['seed=%d' % self.seed,
                                 '%load_ext rmagic',
                                 'from IPython.core.displaypub import publish_display_data',
@@ -49,7 +51,7 @@ class CellQuestion(traits.HasTraits):
         run_cell(cell_input, shell=self.shell)
 
     def form_cell(self, seed, metadata={}):
-        self.seed = seed 
+        self.seed = seed; self.update_seed()
         if 'answer' in metadata:
             self.answer = metadata['answer']
         outputs, variables = run_cell(self.cell_input, 
@@ -70,7 +72,7 @@ class CellQuestion(traits.HasTraits):
 
         seed += cell.metadata['trial_number']
 
-        self.seed = seed
+        self.seed = seed; self.update_seed()
 
         # return a checked input
         # maybe we can just do this in javascript?
@@ -117,6 +119,7 @@ class CellQuestion(traits.HasTraits):
                 cell.outputs += html_outputs(self.shell, self.comments[correct] % cell.metadata) 
             else:
                 cell.outputs += html_outputs(self.shell, self.practice_comments[correct] % cell.metadata) 
+
         return cell
 
 class TAGrade(CellQuestion):
@@ -131,16 +134,14 @@ class TAGrade(CellQuestion):
             cell_metadata[key] = eval(value)
         comment_outputs = html_outputs(self.shell, '''<h3>%(comments)s\nPoints: %(points)d/%(max_points)d</h3>''' % cell_metadata)
         cell_metadata['identifier'] = self.identifier
-        import sys; sys.stderr.write(`outputs+comment_outputs`)
         cell = nbformat.new_code_cell(input=self.cell_input,
                                       outputs=outputs + comment_outputs,
                                       metadata=cell_metadata)
-        import sys; sys.stderr.write(`cell`)
         return cell
 
     def check_answer(self, cell_dict, user):
         cell = nbformat.NotebookNode(**cell_dict)
-        return_cell
+        return cell
 
 class MultipleChoiceCell(CellQuestion):
 
@@ -176,14 +177,13 @@ class MultipleChoiceCell(CellQuestion):
         self.form = form_input
 
     def form_cell(self, seed, metadata={}, shell=None):
-        self.seed = seed
+        self.seed = seed; self.update_seed()
         outputs, variables = run_cell(self.cell_input, 
                                      user_variables=['correct_answer',
                                                      'choices',
                                                      'question_text'], shell=self.shell)[:2]
 
         # store the choices and correct answer for checking later
-
 
         self.choices = eval(variables['choices'])
         self.answer_buffer[seed] = eval(variables['correct_answer'])

@@ -1234,8 +1234,10 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
-                if (cell_data.metadata.owner == 'workbook'){
-                    cell_data.cell_type = 'workbook';
+                if (cell_data.metadata !== undefined) {
+                    if (cell_data.metadata.owner == 'workbook'){
+                         cell_data.cell_type = 'workbook';
+                    };
                 }
 
                 new_cell = this.insert_cell_below(cell_data.cell_type);
@@ -1299,7 +1301,7 @@ var IPython = (function (IPython) {
     }
 
     Notebook.prototype.check_cell_success = function(new_cell_json) {
-	nb = this.notebook;
+	nb = IPython.notebook;
 	i = nb.find_cell_index(this);
 	// insert new cell and delete old cell
 	new_cell = nb.insert_cell_below('workbook',i);

@@ -51,9 +51,9 @@ class HomeworkMagics(Magics):
     @cell_magic
     def wb_question(self, line, cell):
         "Generate a question after setting seed=seed+trial."
-        counter.next()
         args = parse_argstring(self.wb_question, line)
-        question = CellQuestion(cell_input=cell, identifier=args.identifier)
+        question = CellQuestion(cell_input=cell, identifier=args.identifier,
+                                number=counter.question_number)
         question.shell = self.shell 
         question_types[args.identifier] = question
         if args.seed is None:
@@ -92,9 +92,11 @@ class HomeworkMagics(Magics):
         The check_answer just returns whether answer['answer'] == correct_answer
         
         """
-        counter.next()
         args = parse_argstring(self.wb_question, line)
-        question = MultipleChoiceCell(cell_input=cell, identifier=args.identifier, practice=args.practice)
+        question = MultipleChoiceCell(cell_input=cell, 
+                                      identifier=args.identifier, 
+                                      practice=args.practice,
+                                      number=counter.question_number)
         question.shell = self.shell 
         question_types[args.identifier] = question
         if args.seed is None:
