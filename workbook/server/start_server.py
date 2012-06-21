@@ -5,7 +5,6 @@ from IPython.nbformat import current as nbformat
 
 from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, AES, BLOCK_SIZE, KEY_SIZE, Cipher
 from workbook.converters.metadata import set_group
-from workbook.converters import compose_converters
 
 from workbook.server.answer_checker import check_answer, initialize_shell
 from workbook.utils.homework_creator import create_assignment
@@ -130,8 +129,6 @@ def reverse(nb, filename, user, nbname):
     converters in reverse direction
 
     """
-    # filenames of converters will be adjusted by  compose_converters
-
     decrypt = DecryptTeacherInfo(filename, 'decrypt', user['cipher']) 
     decrypt.render()
     os.rename('decrypt.ipynb', filename)
