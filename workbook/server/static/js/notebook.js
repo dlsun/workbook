@@ -104,6 +104,10 @@ var IPython = (function (IPython) {
 		// Shift-c
                 that.check_cell(that.get_selected_cell());
                 return false;
+            } else if (event.which === 71 && event.shiftKey) {
+		// Shift-g
+                that.grade_cell(that.get_selected_cell());
+                return false;
             } else if (event.which === 88 && that.control_key_active) {
                 // Cut selected cell = x
                 that.cut_cell();
@@ -1234,8 +1238,10 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
-                if (cell_data.metadata.owner == 'workbook'){
-                    cell_data.cell_type = 'workbook';
+                if (cell_data.metadata !== undefined) {
+                    if (cell_data.metadata.owner == 'workbook'){
+                         cell_data.cell_type = 'workbook';
+                    };
                 }
 
                 new_cell = this.insert_cell_below(cell_data.cell_type);
@@ -1299,7 +1305,7 @@ var IPython = (function (IPython) {
     }
 
     Notebook.prototype.check_cell_success = function(new_cell_json) {
-	nb = this.notebook;
+	nb = IPython.notebook;
 	i = nb.find_cell_index(this);
 	// insert new cell and delete old cell
 	new_cell = nb.insert_cell_below('workbook',i);
@@ -1314,6 +1320,52 @@ var IPython = (function (IPython) {
 	window.alert(error_msg);
         $([IPython.events]).trigger('notebook_save_failed.Notebook');
     };
+
+   // this passes a cell JSON to the server to print the grades to stderr for now
+   Notebook.prototype.grade_cell = function (cell) {
+	form = cell.element.find('form')[0];
+	if(form !== undefined) {
+	    if(form.value !== undefined) {
+		var settings = {
+		    processData : false,
+		    cache : false,
+		    type : "POST",
+		    data : JSON.stringify(cell),
+		    headers : {'Content-Type': 'application/json'},
+		    dataType : "json", // output data
+		    contentType: 'application/json;charset=UTF-8',
+ 		    success : $.proxy(this.check_cell_success,cell), // why cell here? will this be the returned value? it should be
+ 		    error : $.proxy(this.check_cell_error,this)
+		};
+		var url = '/hw/' + this.notebook_name  + '/grade' // server will determine question to check from the JSON
+		$.ajax(url, settings);	
+	    }
+	}	
+    }
+
+   // this passes a cell JSON to the server to print the grades to stderr for now
+   Notebook.prototype.grade_notebook = function () {
+        // We may want to move the name/id/nbformat logic inside toJSON?
+        var data = this.toJSON();
+        data.metadata.name = this.notebook_name;
+        data.nbformat = this.nbformat;
+        // We do the call with settings so we can set cache to false.
+        var settings = {
+            processData : false,
+            cache : false,
+            type : "PUT",
+            data : JSON.stringify(data),
+            headers : {'Content-Type': 'application/json'},
+	    contentType: 'application/json;charset=UTF-8', // added by Dennis
+            success : $.proxy(this.save_notebook_success,this),
+            error : $.proxy(this.save_notebook_error,this)
+        };
+        $([IPython.events]).trigger('notebook_saving.Notebook');
+        //var url = $('body').data('baseProjectUrl') + 'notebooks/' + this.notebook_id;
+	var url = '/hw/' + this.notebook_name  + '/gradebook'
+        $.ajax(url, settings);
+    };
+
 
     Notebook.prototype.save_notebook = function () {
         // We may want to move the name/id/nbformat logic inside toJSON?

@@ -26,7 +26,8 @@ from workbook.api import counter
 from cell_question import (CellQuestion, 
                            MultipleChoiceCell,
                            TAGrade,
-                           question_types)
+                           question_types, 
+                           question_instances)
 
 @magics_class
 class HomeworkMagics(Magics):
@@ -43,27 +44,51 @@ class HomeworkMagics(Magics):
         help='Random seed to set.'
         )
     @argument(
+        '--user_id', 
+        default='server',
+        help='Default user.'
+        )
+    @argument(
         '--practice', 
         default=False,
         action='store_true',
         help='Should the question be a practice (i.e. regenerated over and over)'
         )
+    @argument(
+        '--max_points', 
+        default=1,
+        type=int,
+        action='store_true',
+        help='Max points for a question.'
+        )
     @cell_magic
     def wb_question(self, line, cell):
         "Generate a question after setting seed=seed+trial."
-        counter.next()
         args = parse_argstring(self.wb_question, line)
-        question = CellQuestion(cell_input=cell, identifier=args.identifier)
+        # later, we put a user_id into the namespace
+        # while saving notebook of each student -- a bit of a hack
+        if 'user_id' in self.shell.user_ns:
+            user_id = self.shell.user_ns['user_id']
+        else:
+            user_id = args.user_id
+
+        question = CellQuestion(cell_input=cell, identifier=args.identifier,
+                                number=counter.question_number,
+                                user_id=user_id)
+        question.points = {True:args.max_points,
+                           False:0,
+                           'max':args.max_points}
         question.shell = self.shell 
-        question_types[args.identifier] = question
+
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
                 seed = int(self.shell.user_ns['seed'])
             else:
                 seed = 2
         question.seed = seed
+
         cell = question.form_cell(seed)
-        question_types[question.identifier] = question
+        question_types[args.identifier] = question
 
     @line_cell_magic
     def wb_grade_cell(self, line, cell=None):
@@ -72,8 +97,18 @@ class HomeworkMagics(Magics):
         if cell is None:
             cell = ''
 
+
         args = parse_argstring(self.wb_question, line)
-        grade = TAGrade(cell_input=cell, identifier=args.identifier)
+
+        # we have to make sure this is the student's id so it gets attached
+        # in the correct place
+        if 'user_id' in self.shell.user_ns:
+            user_id = self.shell.user_ns['user_id']
+        else:
+            user_id = args.user_id
+
+        grade = TAGrade(cell_input=cell, identifier=args.identifier,
+                        user_id=user_id)
         grade.shell = self.shell 
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
@@ -92,11 +127,25 @@ class HomeworkMagics(Magics):
         The check_answer just returns whether answer['answer'] == correct_answer
         
         """
-        counter.next()
         args = parse_argstring(self.wb_question, line)
-        question = MultipleChoiceCell(cell_input=cell, identifier=args.identifier, practice=args.practice)
+
+        question.points = {True:args.max_points,
+                           False:0,
+                           'max':args.max_points}
+
+        # later, we put a user_id into the namespace
+        # while saving notebook of each student -- a bit of a hack
+        if 'user_id' in self.shell.user_ns:
+            user_id = self.shell.user_ns['user_id']
+        else:
+            user_id = args.user_id
+
+        question = MultipleChoiceCell(cell_input=cell, 
+                                      identifier=args.identifier, 
+                                      practice=args.practice,
+                                      number=counter.question_number,
+                                      user_id=user_id)
         question.shell = self.shell 
-        question_types[args.identifier] = question
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
                 seed = int(self.shell.user_ns['seed'])
@@ -104,7 +153,7 @@ class HomeworkMagics(Magics):
                 seed = 2
         question.seed = seed
         cell = question.form_cell(seed)
-        question_types[question.identifier] = question
+        question_types[args.identifier] = question
 
     @cell_magic
     def wb_true_false(self, line, cell):

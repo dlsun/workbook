@@ -2,6 +2,7 @@ import json
 
 from ..external import nbconvert as nbc
 import base64
+from md5 import md5
 
 # pycrypto tools
 
@@ -9,8 +10,6 @@ from Crypto.Cipher import AES
 BLOCK_SIZE = 16
 KEY_SIZE = 16
 AES.block_size = BLOCK_SIZE
-
-from metadata import find_and_merge_metadata
 
 class Cipher(object):
     
@@ -41,8 +40,11 @@ class EncryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        output = find_and_merge_metadata(cell)
-        cell.input = self.cipher.encrypt(cell.input)
+        if cell.input and cell.metadata['group'] == 'teacher':
+            cell.metadata.setdefault('input_encrypted', False)
+            if cell.metadata['input_encrypted'] == False:
+                cell.input = self.cipher.encrypt(cell.input)
+                cell.metadata['input_encrypted'] = True
         return nbc.ConverterNotebook.render_code(self, cell)
 
 class DecryptTeacherInfo(nbc.ConverterNotebook):
@@ -53,8 +55,12 @@ class DecryptTeacherInfo(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, cell):
-        output = find_and_merge_metadata(cell)
-        cell.input = self.cipher.decrypt(cell.input)
+        if cell.input and cell.metadata['group'] == 'teacher':
+            #import sys; sys.stderr.write('decrpyt: ' + `cell` + '\n')
+            cell.metadata.setdefault('input_encrypted', False)
+            if cell.metadata['input_encrypted'] == True:
+                cell.input = self.cipher.decrypt(cell.input)
+                cell.metadata['input_encrypted'] = False
         return nbc.ConverterNotebook.render_code(self, cell)
 
 if __name__ == "__main__":
