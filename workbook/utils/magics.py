@@ -26,8 +26,8 @@ from workbook.api import counter
 from cell_question import (CellQuestion, 
                            MultipleChoiceCell,
                            TAGrade,
-                           question_types, 
-                           question_instances)
+                           TextBox,
+                           question_types)
 
 @magics_class
 class HomeworkMagics(Magics):
@@ -140,6 +140,44 @@ class HomeworkMagics(Magics):
                                       practice=args.practice,
                                       number=counter.question_number,
                                       user_id=user_id)
+
+        question.points = {True:args.max_points,
+                           False:0,
+                           'max':args.max_points}
+
+        question.shell = self.shell 
+        if args.seed is None:
+            if 'seed' in self.shell.user_ns:
+                seed = int(self.shell.user_ns['seed'])
+            else:
+                seed = 2
+        question.seed = seed
+        cell = question.form_cell(seed)
+        question_types[args.identifier] = question
+
+    @cell_magic
+    def wb_textbox(self, line, cell):
+        """
+        Create a text box CellQuestion. The cell
+        must have variables 'correct_answer' defined.
+
+        The check_answer just returns whether answer['answer'] == correct_answer
+        
+        """
+        args = parse_argstring(self.wb_question, line)
+
+        # later, we put a user_id into the namespace
+        # while saving notebook of each student -- a bit of a hack
+        if 'user_id' in self.shell.user_ns:
+            user_id = self.shell.user_ns['user_id']
+        else:
+            user_id = args.user_id
+
+        question = TextBox(cell_input=cell, 
+                           identifier=args.identifier, 
+                           practice=args.practice,
+                           number=counter.question_number,
+                           user_id=user_id)
 
         question.points = {True:args.max_points,
                            False:0,

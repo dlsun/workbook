@@ -3,6 +3,7 @@ import datetime, time # for timestamping instances
 from md5 import md5
 from workbook.io import *
 from IPython.utils import traitlets as traits
+import numpy as np
 
 question_types = {}
 question_instances = {}
@@ -222,8 +223,6 @@ class MultipleChoiceCell(CellQuestion):
 
         form_input = '\n'.join(["publish_display_data('CellQuestion', {'text/latex':question_text})",
                                 "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % radio_code]) 
-        for _ in range(5):
-            self.seed = self.seed
         self.form = form_input
 
 
@@ -250,6 +249,57 @@ class TAGrade(CellQuestion):
     def check_answer(self, cell_dict, user):
         cell = nbformat.NotebookNode(**cell_dict)
         return cell
+
+class TextBox(MultipleChoiceCell):
+
+    correct_answer = traits.Any
+
+    def __init__(self, **kw):
+        CellQuestion.__init__(self, **kw)
+        self.on_trait_change(self.generate_cell_outputs, ['seed'])
+        self.on_trait_change(self.generate_form_input, ['answer', 
+                                                        'identifier'])
+        self.on_trait_change(self.generate_form_outputs, ['form'])
+        self.on_trait_change(self.generate_comment_outputs, ['answer'])
+        self.generate_form_input()
+
+    def generate_cell_outputs(self):
+        sys.stderr.write('\ncell outputs: %d %s\n' % (self.seed, `self.metadata`))
+        # store the correct answer for checking later
+        self.cell_outputs, variables = \
+            run_cell(self.cell_input, 
+                     user_variables=['correct_answer'], 
+                     shell=self.shell)[:2]
+
+        self.correct_answer = eval(variables['correct_answer'])
+        self.answer = ''
+
+    def generate_form_input(self):
+        if self.answer:
+            value = self.answer
+        else:
+            value = ''
+
+        d = {'identifier': self.identifier, 'value':value }
+
+        textbox_code = """<p><input type="text" name="%(identifier)s" value="%(value)s"> %(value)s</p>""" % d
+        form_input = '\n'.join(["publish_display_data('CellQuestion', {'text/latex':question_text})",
+                                "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % textbox_code]) 
+        self.form = form_input
+
+    def validate_answer(self):
+        if self.answer:
+            correct = np.allclose(self.answer, self.correct_answer)
+            if not self.practice:
+                self.metadata['points'] = self.points[correct]
+                self.metadata['max_points'] = self.points['max']
+            else:
+                self.metadata.setdefault('points', 0)
+                self.metadata.setdefault('max_points', 0)
+                self.metadata['points'] += self.points[correct]
+                self.metadata['max_points'] += self.points['max']
+            self.metadata['correct'] = correct # probably not necessary
+
 
 def html_outputs(shell, *raw_html_bits):
     return run_cell('\n'.join(["""publish_display_data("CellQuestion", {"text/html":'''%s'''})""" % raw_html for raw_html in raw_html_bits]), shell=shell)[0]
