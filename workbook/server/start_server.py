@@ -86,7 +86,11 @@ def calculate_grade(nb, user):
                 'identifier' in cell.metadata):
                 grades.append(get_grades(cell, user)[0])
     grade_array = np.array(grades)
-    return grade_array.sum(0)[1:]
+    try:
+        totals = grade_array.sum(0)[1:]
+        return totals
+    except IndexError:
+        return (0,0)
 
 def generate_student(user):
     #StudentCreator(user['id'], user['name']).render()
