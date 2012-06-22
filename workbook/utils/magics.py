@@ -54,6 +54,13 @@ class HomeworkMagics(Magics):
         action='store_true',
         help='Should the question be a practice (i.e. regenerated over and over)'
         )
+    @argument(
+        '--max_points', 
+        default=1,
+        type=int,
+        action='store_true',
+        help='Max points for a question.'
+        )
     @cell_magic
     def wb_question(self, line, cell):
         "Generate a question after setting seed=seed+trial."
@@ -68,6 +75,9 @@ class HomeworkMagics(Magics):
         question = CellQuestion(cell_input=cell, identifier=args.identifier,
                                 number=counter.question_number,
                                 user_id=user_id)
+        question.points = {True:args.max_points,
+                           False:0,
+                           'max':args.max_points}
         question.shell = self.shell 
 
         if args.seed is None:
@@ -118,6 +128,10 @@ class HomeworkMagics(Magics):
         
         """
         args = parse_argstring(self.wb_question, line)
+
+        question.points = {True:args.max_points,
+                           False:0,
+                           'max':args.max_points}
 
         # later, we put a user_id into the namespace
         # while saving notebook of each student -- a bit of a hack

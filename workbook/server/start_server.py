@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import os, shutil, glob, json, tempfile
+import numpy as np
 
 from IPython.nbformat import current as nbformat
 from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
@@ -8,7 +9,6 @@ from workbook.converters.encrypt import EncryptTeacherInfo, DecryptTeacherInfo, 
 from workbook.converters.metadata import set_group
 
 from workbook.server.answer_checker import check_answer, get_grades
-from workbook.server.calculate_grade import calculate_grade
 from workbook.utils.homework_creator import create_assignment
 from workbook.io import *
 
@@ -68,7 +68,7 @@ def index():
     for nb_file in nb_files:
         nb = nbformat.read(open(nb_file, 'rb'), 'json')
         nb = forward(nb, nb_file, user, os.path.split(nb_file)[1][:-6])
-        total_points, poss_points = calculate_grade(nb)
+        total_points, poss_points = calculate_grade(nb, user)
         hw_data.append({'name': nb.metadata.name,
                 'total_points': total_points,
                 'poss_points': poss_points})
@@ -77,6 +77,16 @@ def index():
     nb_files = [os.path.split(path)[1] for path in nb_files ]
 
     return render_template('index.html',user = user, nb_files=nb_files, hw_data=hw_data)
+
+def calculate_grade(nb, user):
+    grades = []
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            if (hasattr(cell, 'input') and hasattr(cell, 'metadata') and 
+                'identifier' in cell.metadata):
+                grades.append(get_grades(cell, user)[0])
+    grade_array = np.array(grades)
+    return grade_array.sum(0)[1:]
 
 def generate_student(user):
     #StudentCreator(user['id'], user['name']).render()
