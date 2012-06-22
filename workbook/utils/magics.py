@@ -79,7 +79,6 @@ class HomeworkMagics(Magics):
 
         cell = question.form_cell(seed)
         question_types[args.identifier] = question
-        question_instances[(args.identifier, question.user_id)] = question
 
     @line_cell_magic
     def wb_grade_cell(self, line, cell=None):
@@ -88,8 +87,18 @@ class HomeworkMagics(Magics):
         if cell is None:
             cell = ''
 
+
         args = parse_argstring(self.wb_question, line)
-        grade = TAGrade(cell_input=cell, identifier=args.identifier)
+
+        # we have to make sure this is the student's id so it gets attached
+        # in the correct place
+        if 'user_id' in self.shell.user_ns:
+            user_id = self.shell.user_ns['user_id']
+        else:
+            user_id = args.user_id
+
+        grade = TAGrade(cell_input=cell, identifier=args.identifier,
+                        user_id=user_id)
         grade.shell = self.shell 
         if args.seed is None:
             if 'seed' in self.shell.user_ns:
@@ -131,7 +140,6 @@ class HomeworkMagics(Magics):
         question.seed = seed
         cell = question.form_cell(seed)
         question_types[args.identifier] = question
-        question_instances[(args.identifier, question.user_id)] = question
 
     @cell_magic
     def wb_true_false(self, line, cell):

@@ -53,7 +53,7 @@ class CellQuestion(traits.HasTraits):
         self.on_trait_change(self.set_md5, ['cell_input', 'identifier', 'user_id'])
         self.on_trait_change(self.generate_cell_outputs, ['seed'])
         self.timestamp = datetime.datetime(*time.localtime()[:6])
-
+        question_instances[(self.identifier, self.user_id)] = self
 
     def _shell_changed(self):
         run_cell('\n'.join(['%load_ext rmagic',
@@ -242,6 +242,9 @@ class TAGrade(CellQuestion):
         cell = nbformat.new_code_cell(input=self.cell_input,
                                       outputs=outputs + comment_outputs,
                                       metadata=cell_metadata)
+        self.set_md5()
+        cell.metadata['md5'] = self.md5
+        self.metadata.update(cell.metadata)
         return cell
 
     def check_answer(self, cell_dict, user):
