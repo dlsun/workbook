@@ -186,7 +186,8 @@ class MultipleChoiceCell(CellQuestion):
         self.on_trait_change(self.generate_cell_outputs, ['seed'])
         self.on_trait_change(self.generate_form_input, ['answer', 
                                                         'choices',
-                                                        'identifier'])
+                                                        'identifier',
+                                                        'correct_answer'])
         self.on_trait_change(self.generate_form_outputs, ['form'])
         self.on_trait_change(self.generate_comment_outputs, ['answer'])
 
@@ -258,7 +259,8 @@ class TextBox(MultipleChoiceCell):
         CellQuestion.__init__(self, **kw)
         self.on_trait_change(self.generate_cell_outputs, ['seed'])
         self.on_trait_change(self.generate_form_input, ['answer', 
-                                                        'identifier'])
+                                                        'identifier',
+                                                        'correct_answer'])
         self.on_trait_change(self.generate_form_outputs, ['form'])
         self.on_trait_change(self.generate_comment_outputs, ['answer'])
         self.generate_form_input()
