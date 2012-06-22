@@ -283,6 +283,8 @@ class TextBox(MultipleChoiceCell):
         d = {'identifier': self.identifier, 'value':value }
 
         textbox_code = """<p><input type="text" name="%(identifier)s" value="%(value)s"> %(value)s</p>""" % d
+
+        textbox_code = ('<form name="%(identifier)s" method="post" >\n' % d) + textbox_code + '</form>\n'
         form_input = '\n'.join(["publish_display_data('CellQuestion', {'text/latex':question_text})",
                                 "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % textbox_code]) 
         self.form = form_input
