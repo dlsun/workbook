@@ -51,7 +51,7 @@ notebooks.</span>
 {% for hw in hw_data %}
 <div class="list_item ui-widget ui-widget-content ui-helper-clearfix" style="border-top-style: none; ">
   <span class="item_name">
-    <a href='hw/{{ nb_files[loop.index0][:-6] }}' target="_blank">{{ hw.name }}</a> (Score: {{ hw.total_points }} / {{ hw.poss_points }})
+    <a href='hw/{{ nb_files[loop.index0][:-6] }}' target="_blank">{{ hw.name }}</a> (Score: {{ hw.points }} / {{ hw.max_points }})
   </span>
 </div>
 {% endfor %}

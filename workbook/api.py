@@ -1,6 +1,5 @@
 import numpy as np, random
 
-from .utils.questions import *
 from IPython.core.displaypub import publish_display_data
 
 class HomeworkCounter(object):

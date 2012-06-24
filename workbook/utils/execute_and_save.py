@@ -17,10 +17,12 @@ from IPython.nbformat.current import reads, NotebookNode
 from workbook.external.nbconvert import ConverterNotebook
 from workbook.io import *
 
+# for testing only
+import sys
+
 def run_cell(cell_input, user_variables=None, user_expressions=None):
-    # print "\n\ntesting:"
-    # print cell.input
-    returned_user_variables = {}
+
+#    returned_user_variables = {}
     returned_user_expressions = {}
     shell.execute(cell_input, user_variables=user_variables, user_expressions=user_expressions)
     # wait for finish, maximum 20s
@@ -64,7 +66,12 @@ def run_cell(cell_input, user_variables=None, user_expressions=None):
         outs.append(out)
 
     if 'user_variables' in shell_msg['content'].keys():
-        returned_user_variables.update(shell_msg['content']['user_variables'])
+        returned_user_variables = shell_msg['content']['user_variables']
+        for key, value in returned_user_variables.items():
+            returned_user_variables[key] = eval(value)
+        #if returned_user_variables:
+        #    sys.stderr.write(str(returned_user_variables) + '\n\n')
+
     if 'user_expressions' in shell_msg['content'].keys():
         returned_user_expressions.update(shell_msg['content']['user_expressions'])
 
@@ -96,18 +103,36 @@ def execute_notebook(nb, header_input=''):
     for ws in nb.worksheets:
         for cell in ws.cells:
             cell.prompt_number = prompt_number
-            if cell.cell_type != 'code':
-                continue
-            try:
-                run_cell(header_input)
-                outs = run_cell(cell.input)[0]
-            except Exception as e:
-                print "failed to run cell:", repr(e)
-                print cell.input
-                errors += 1
-                continue
-            cell.outputs = outs
-            prompt_number += 1
+            # to check if a cell contains a question, we look for homework magic at beginning of input box
+            if cell.cell_type == 'code':
+                if ''.join(cell.input).strip()[:4] == '%%wb':
+                    try:
+                        run_cell(header_input)
+                        outs, user_vars = run_cell(cell.input, user_variables = ['identifier',
+                                                                                 'max_points',
+                                                                                 'max_tries'])[:-1]
+                        if 'identifier' in user_vars:
+                            import sys; sys.stderr.write('Now generating question: ' + user_vars['identifier'] + '\n')
+                            cell.metadata.update( {'identifier': user_vars['identifier']} )
+                        if 'max_points' in user_vars:
+                            cell.metadata.update( {'max_points': user_vars['max_points']} )
+                        if 'max_tries' in user_vars:
+                            cell.metadata.update( {'max_tries': user_vars['max_tries']} )
+                        cell.metadata.update( {'points': 0, 'tries': 0 } )
+                    except Exception as e:
+                        print "failed to run cell:", repr(e)
+                        print cell.input
+                        errors += 1
+                else:
+                    try:
+                        run_cell(header_input)
+                        outs, user_vars = run_cell(cell.input)[:-1]
+                    except Exception as e:
+                        print "failed to run cell:", repr(e)
+                        print cell.input
+                        errors += 1
+                cell.outputs = outs
+                prompt_number += 1
 
 def execute_and_save(ipynb, student_info):
     seed = student_info['seed']

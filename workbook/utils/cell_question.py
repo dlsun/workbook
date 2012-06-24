@@ -1,6 +1,5 @@
 import json, sys
 import datetime, time # for timestamping instances
-from md5 import md5
 from workbook.io import *
 from IPython.utils import traitlets as traits
 
@@ -10,200 +9,111 @@ question_instances = {}
 import IPython.nbformat.current as nbformat
 from workbook.utils.execute_and_save import shell, run_cell as km_run_cell
 
+# wrapper around the kernel's run_cell
 def run_cell(cell_input, shell=None, user_variables=[]):
     if shell is not None:
         shell.run_cell(cell_input)
     return km_run_cell(cell_input, user_variables=user_variables)
 
+
 class CellQuestion(traits.HasTraits):
 
-    metadata = traits.Dict
-    answer = traits.Unicode
-    correct_answer = traits.Unicode
     cell_input = traits.Unicode
-    form = traits.Unicode
-    identifier = traits.Unicode
-    seed = traits.Int
-    number = traits.Int
-    shell = traits.Any(None)
-    md5 = traits.Unicode
     user_id = traits.Unicode
+    identifier = traits.Unicode
+    max_points = traits.Int
+    max_tries = traits.Int
+    seed = traits.Int
+    metadata = traits.Dict # this should be removed
+    answer = traits.Unicode
+    shell = traits.Any(None)
 
     # the different outputs
-
     cell_outputs = traits.List
-    form_outputs = traits.List
-    comment_outputs = traits.List
-
-    comments = traits.Dict({True:"<h2> Good job. Points: %(points)d / %(max_points)d </h2>",
-                            False:"<h2> Try again. Points: %(points)d / %(max_points)d</h2>"})
-
-    practice_comments = traits.Dict({True:"<h2> Good job. Here's another. Points: %(points)d / %(max_points)d </h2>",
-                            False:"<h2> Try again. Here's another. Points: %(points)d / %(max_points)d</h2>"})
-
-    points = traits.Dict({True:1,
-                          False:0,
-                          'max':1})
-
-    practice = traits.Bool(False)
+    cell_comments = traits.List
 
     def __init__(self, **kw):
+        # initialize some traits
         traits.HasTraits.__init__(self, **kw)
+
+        # set header information
+        header_input = ("identifier = '%s' \n" % self.identifier) + ("max_points = %d \n" % self.max_points) + \
+            ("max_tries = %d \n" % self.max_tries)
+        run_cell(header_input, shell = self.shell)
+
+        # set event handlers
         self.on_trait_change(self.update_seed, ['seed'])
-        self.on_trait_change(self.set_md5, ['cell_input', 'identifier', 'user_id'])
         self.on_trait_change(self.generate_cell_outputs, ['seed'])
         self.timestamp = datetime.datetime(*time.localtime()[:6])
         question_instances[(self.identifier, self.user_id)] = self
-
+    
     def _shell_changed(self):
         run_cell('\n'.join(['%load_ext rmagic',
                             'from IPython.core.displaypub import publish_display_data',
                             'import numpy as np, random, json']),
                  shell=self.shell)
-
-    def set_md5(self):
-        h = md5()
-        seed = self.retrieve_seed()
-        h.update(self.cell_input + self.identifier + str(seed))
-        self.md5 = h.hexdigest()
-
-    def validate_md5(self, md5_hash):
-        h = md5()
-        seed = self.retrieve_seed()
-        h.update(self.cell_input + self.identifier + str(seed))
-        correct_md5_hash = h.hexdigest()
-        return md5_hash == correct_md5_hash
-
+    
     def update_seed(self):
+        """
+        Set the seed in the shell by creating a 'cell' and running it.
+        """
         cell_input = '\n'.join(['seed=%d' % self.seed,
                                 'np.random.seed(seed); random.seed(seed)',
                                 '%R -i seed set.seed(seed); rm(seed)', ''])
         run_cell(cell_input, shell=self.shell)
-
+    
     def generate_cell_outputs(self):
-        self.cell_outputs, variables = run_cell(self.cell_input, 
-                                                user_variables=['correct_answer'],
-                                                shell=self.shell)[:2]
-        self.correct_answer = eval(variables['correct_answer'])
+        """
+        runs the cell_input through the shell and prints output
 
-
+        NB. This method probably needs to be overridden in subclasses.
+        """
+        # store the identifier and max_points
+        self.cell_outputs, variables = \
+            run_cell(self.cell_input,shell=self.shell)[:2]
+    
     def form_cell(self, seed, shell=None):
         self.seed = seed; self.update_seed()
         cell = nbformat.new_code_cell(input=self.cell_input, 
-                                      outputs=self.cell_outputs +
-                                      self.form_outputs + self.comment_outputs)
-        self.set_md5()
-        cell.metadata['md5'] = self.md5
+                                      outputs=self.cell_outputs)
         self.metadata.update(cell.metadata)
         return cell
-            
-    def validate_answer(self):
-        if self.answer:
-            correct = self.answer == self.correct_answer
-            if not self.practice:
-                self.metadata['points'] = self.points[correct]
-                self.metadata['max_points'] = self.points['max']
-            else:
-                self.metadata.setdefault('points', 0)
-                self.metadata.setdefault('max_points', 0)
-                self.metadata['points'] += self.points[correct]
-                self.metadata['max_points'] += self.points['max']
-            self.metadata['correct'] = correct # probably not necessary
-
+    
     def retrieve_seed(self):
         return json.load(open(os.path.join(PATH_TO_HW_FILES,
                                            self.user_id, 
                                            "student_info.json"), 'rb'))['seed']
 
-
     def check_answer(self, cell_dict):
-        cell = nbformat.NotebookNode(**cell_dict)
-        self.metadata.update(cell.metadata)
-
-        seed = self.retrieve_seed()
-
-        self.set_md5()
-        cell.metadata['md5'] = self.md5
-        self.metadata.update(cell.metadata)
-        import sys; sys.stderr.write('\nwriting md5 %s\n' % `(self.md5, cell.metadata['md5'])`)
-
-        cell.metadata.setdefault('trial_number', 0)
-        self.metadata.update(cell.metadata)
-        seed += cell.metadata['trial_number']
-
-        self.seed = seed; self.update_seed()
-
-        # append the answer to the answer history
-
-        cell.metadata.setdefault('answer_history', [])
-        cell.metadata['answer_history'].append(cell.metadata['answer'])
-        self.metadata.update(cell.metadata)
-
-        # reset the outputs -- this should only trigger
-        # generate_form_outputs and generate_comment_outputs but not
-        # generate_cell_outputs because the seed should not have changed
-
-        self.answer = cell.metadata['answer']
-        cell.outputs = self.cell_outputs + self.form_outputs + self.comment_outputs
-        cell.metadata.update(self.metadata)
-
-        # if practice, regenerate the cell and its outputs
-
-        if self.practice:
-            cell['metadata']['trial_number'] += 1
-            self.metadata.update(cell.metadata)
-            seed += 1
-            self.seed = seed # ; self.update_seed() # this last update_seed 
-            # this should trigger regeneration of all 3 generate_*_outputs
-            cell.outputs = self.cell_outputs + self.form_outputs + self.comment_outputs
-            cell.metadata.update(self.metadata)
-
-        return cell
-
-    def generate_form_outputs(self):
-        sys.stderr.write('\nform outputs\n')
-        self.form_outputs = run_cell(self.form,
-                                     shell=self.shell)[0]
-        
-    def generate_comment_outputs(self):
-        self.validate_answer()
-        correct = self.metadata['correct']
-        sys.stderr.write('\ncomment outputs %s %s \n' % (`correct`, `self.metadata['correct']`))
-        if not self.practice: 
-            outputs = html_outputs(self.shell, self.comments[correct] % self.metadata)
-        else:
-            outputs = html_outputs(self.shell, self.practice_comments[correct] % self.metadata)
-        self.comment_outputs = outputs
+        """
+        checks answer and returns a new cell
+        """
+        raise NotImplementedError
 
 
-class MultipleChoiceCell(CellQuestion):
+class MultipleChoiceQuestion(CellQuestion):
 
     choices = traits.List
+    correct_answer = traits.Unicode
 
     def __init__(self, **kw):
         CellQuestion.__init__(self, **kw)
-        self.on_trait_change(self.generate_cell_outputs, ['seed'])
-        self.on_trait_change(self.generate_form_input, ['answer', 
-                                                        'choices',
-                                                        'identifier'])
-        self.on_trait_change(self.generate_form_outputs, ['form'])
-        self.on_trait_change(self.generate_comment_outputs, ['answer'])
+        self.on_trait_change(self.validate_answer, ['answer'])
 
     def generate_cell_outputs(self):
-        sys.stderr.write('\ncell outputs: %d %s\n' % (self.seed, `self.metadata`))
+
         # store the correct answer for checking later
         self.cell_outputs, variables = \
             run_cell(self.cell_input, 
-                     user_variables=['correct_answer',
-                                     'choices'], 
+                     user_variables=['correct_answer','choices'], 
                      shell=self.shell)[:2]
 
-        self.choices = eval(variables['choices'])
-        self.correct_answer = eval(variables['correct_answer'])
+        # no need to eval()...that's taken care of in run_cell now        
+        self.choices = variables['choices']
+        self.correct_answer = variables['correct_answer']
         self.answer = ''
 
-    def generate_form_input(self):
-        sys.stderr.write('\nform inputs\n')
+        # instructions to generate the form
         if self.answer:
             checked = self.answer
         else:
@@ -218,32 +128,83 @@ class MultipleChoiceCell(CellQuestion):
                 buttons.append("""<p><input type="radio" name="%(identifier)s" value="%(value)s" id="%(value)s" checked="checked"> %(value)s</p>""" % d)
             else:
                 buttons.append("""<p><input type="radio" name="%(identifier)s" value="%(value)s" id="%(value)s"> %(value)s</p>""" % d)
-        radio_code = ('<form name="%(identifier)s" method="post" >\n' % d) + '\n'.join(buttons) + '</form>\n'
+        html = ('<form name="%(identifier)s" method="post" >\n' % d) + '\n'.join(buttons) + '</form>\n'
 
         form_input = '\n'.join(["publish_display_data('CellQuestion', {'text/latex':question_text})",
-                                "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % radio_code]) 
-        for _ in range(5):
-            self.seed = self.seed
-        self.form = form_input
+                                "publish_display_data('CellQuestion', {'text/html':'''%s'''})" % html]) 
+        
+        self.cell_outputs += run_cell(form_input, shell=self.shell)[0]
+    
+ 
+    comments = {True: "<h2>Good job. Points: %(points)d / %(max_points)d</h2>.",
+                False: "<h2>Try again. Points: %(points)d / %(max_points)d. You have used %(tries)d of %(max_tries)d tries.</h2>"}
+    def generate_comments(self):
+        self.cell_comments = html_outputs(self.shell, self.comments[self.metadata['correct']] % self.metadata)
+ 
+    def validate_answer(self):
+        if self.answer:
+            correct = (self.answer == self.correct_answer)
+            self.metadata['correct'] = correct
+            self.metadata['points'] = (self.max_points if correct else 0)
+            self.metadata['max_points'] = self.max_points
+            self.generate_comments()
+
+    def check_answer(self, cell_dict):
+        cell = nbformat.NotebookNode(**cell_dict)
+
+        # get seed and add trial number to it
+        seed = self.retrieve_seed()
+        cell.metadata.setdefault('tries', 0)
+        self.metadata.update(cell.metadata)
+        seed += cell.metadata['tries']
+        self.seed = seed; self.update_seed()
+         
+        # append the answer to the answer history
+        cell.metadata.setdefault('answer_history', [])
+        cell.metadata['answer_history'].append(cell.metadata['answer'])
+        self.metadata.update(cell.metadata)
+
+        # if the user has not used up all the allowed tries
+        if self.metadata['tries'] < self.metadata['max_tries']:
+ 
+            # increment tries count by 1
+            cell.metadata['tries'] += 1
+            self.metadata.update(cell.metadata)
+
+           # this should trigger validate_answer
+            self.answer = cell.metadata['answer']
+ 
+           # generate new question if incorrect
+            if not self.metadata['correct']:
+                self.seed += 1
+            # add the comments to the outputs
+            cell.outputs = self.cell_outputs + self.cell_comments
+            # sync the cell metadata with the server metadata
+
+        else:
+            cell_comments = html_outputs(self.shell, "<h2>Sorry, but you've used up all %(max_tries)d tries for this question. Points: %(points)d / %(max_points)d</h2>" % self.metadata)
+            cell.outputs = self.cell_outputs + cell_comments
+
+        cell.metadata.update(self.metadata)
+
+        return cell
+
 
 
 class TAGrade(CellQuestion):
 
     def form_cell(self, seed, metadata={}):
         outputs, cell_metadata = run_cell(self.cell_input, 
-                                          user_variables=['comments',
+                                          user_variables=['identifier',
+                                                          'comments',
                                                           'points',
                                                           'max_points'],
                                           shell=self.shell)[:2]
-        for key, value in cell_metadata.items():
-            cell_metadata[key] = eval(value)
         comment_outputs = html_outputs(self.shell, '''<h3>%(comments)s\nPoints: %(points)d/%(max_points)d</h3>''' % cell_metadata)
         cell_metadata['identifier'] = self.identifier
         cell = nbformat.new_code_cell(input=self.cell_input,
                                       outputs=outputs + comment_outputs,
                                       metadata=cell_metadata)
-        self.set_md5()
-        cell.metadata['md5'] = self.md5
         self.metadata.update(cell.metadata)
         return cell
 
