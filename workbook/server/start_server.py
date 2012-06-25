@@ -53,7 +53,7 @@ def index():
     for template in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'*.ipynb')):
         student_file = os.path.join(folder, os.path.split(template)[1])
         if not os.path.exists(student_file):
-            generate_assignment(template, user)
+            create_assignment(template, os.path.join(folder, 'student_info.json'))
     nb_files = glob.glob(os.path.join(folder, '*ipynb'))
 
     # open up each file and calculate grade
@@ -85,10 +85,6 @@ def generate_student(user):
     open(os.path.join(folder, 'student_info.json'), 'wb').write(json.dumps({'name':user['name'],
                                                                             'id':user['id'],
                                                                             'seed':int(user['num'])}))
-
-def generate_assignment(hwtemplate, user):
-    folder = user_folder(user)
-    outfile = create_assignment(hwtemplate, os.path.join(folder, 'student_info.json'))
 
 # load the notebook page
 @app.route('/hw/<nbname>')

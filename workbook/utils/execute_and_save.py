@@ -12,9 +12,8 @@ import os, sys, uuid, json
 from Queue import Empty
 
 from IPython.zmq.blockingkernelmanager import BlockingKernelManager
-from IPython.nbformat.current import reads, NotebookNode
+from IPython.nbformat.current import read, reads, NotebookNode, write
 
-from workbook.external.nbconvert import ConverterNotebook
 from workbook.io import *
 
 # for testing only
@@ -105,6 +104,11 @@ def execute_notebook(nb, header_input=''):
             cell.prompt_number = prompt_number
             # to check if a cell contains a question, we look for homework magic at beginning of input box
             if cell.cell_type == 'code':
+                # set ownership of all existing code cells to instructor
+                # (maybe we should do this for all cells, not just code cells?)
+                cell.metadata.update( {'owner': 'workbook',
+                                       'group': 'teacher'
+                                       })
                 if ''.join(cell.input).strip()[:4] == '%%wb':
                     try:
                         run_cell(header_input)
@@ -118,7 +122,10 @@ def execute_notebook(nb, header_input=''):
                             cell.metadata.update( {'max_points': user_vars['max_points']} )
                         if 'max_tries' in user_vars:
                             cell.metadata.update( {'max_tries': user_vars['max_tries']} )
-                        cell.metadata.update( {'points': 0, 'tries': 0, 'correct': False } )
+                        cell.metadata.update( {'points': 0, 
+                                               'tries': 0, 
+                                               'correct': False,
+                                               } )
                     except Exception as e:
                         print "failed to run cell:", repr(e)
                         print cell.input
@@ -137,10 +144,9 @@ def execute_notebook(nb, header_input=''):
 def execute_and_save(ipynb, student_info):
     seed = student_info['seed']
     header_input = 'seed=%d; user_id="%s"' % (seed, student_info['id'])
-    converter = ConverterNotebook(ipynb, os.path.splitext(ipynb)[0] + '_executed')
-    converter.read()
-    execute_notebook(converter.nb, header_input=header_input)    
-    return converter.render()
+    nb = read(open(ipynb, 'rb'), 'json')
+    execute_notebook(nb, header_input=header_input)
+    write(nb, open(ipynb, 'wb'), 'json')
 
 
 if __name__ == '__main__':

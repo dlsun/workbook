@@ -6,7 +6,6 @@ existing notebook.
 import copy, os, sys, shutil, json
 import glob
 from .execute_and_save import execute_and_save
-from ..converters import sync_metadata_name, MetadataSetter
 from ..external import nbconvert as nbc
 from workbook.io import *
 
@@ -36,16 +35,7 @@ def create_assignment(assignmentfile, student_info):
     outfile = os.path.join(odir, os.path.split(assignmentfile)[1])
     shutil.copy(assignmentfile, outfile)
 
-    newfile = execute_and_save(outfile, student_info)
-    os.rename(newfile, outfile)
-
-    converter = MetadataSetter(outfile, 'tmp', 'teacher')
-    newfile = converter.render()
-    os.rename(newfile, outfile)
-
-    sync_metadata_name(outfile)
-
-    return outfile
+    execute_and_save(outfile, student_info)
 
 
 
