@@ -49,7 +49,6 @@ class MergeData(nbc.ConverterNotebook):
 
     @nbc.DocInherit
     def render_code(self, active_cell):
-        import sys; sys.stderr.write(str(active_cell) + '\n\n')
         if is_workbook_cell(active_cell):
             # get all workbook cells in local copy that match given cell
             local_cells_match = [local_cell for local_cell in self.local_wb_cells \

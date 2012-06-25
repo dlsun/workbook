@@ -2,7 +2,6 @@
 
 from copy import copy
 import os
-from workbook.converters import ConverterNotebook
 import IPython.nbformat.current as nbformat
 from workbook.utils.cell_question import question_types, question_instances
 from workbook.io import *
@@ -33,12 +32,14 @@ def get_question(cell, user):
 
     return question_instances[tag]
 
-def find_cell(input_cell, nb):
-    for ws in nb.worksheets:
-        for cell in ws.cells:
+def get_cell_index(input_cell, nb):
+    for w in range(len(nb.worksheets)):
+        ws = nb.worksheets[w]
+        for i in range(len(ws.cells)):
+            cell = ws.cells[i]
             if hasattr(cell, 'input') and hasattr(cell, 'metadata') and hasattr(cell.metadata, 'identifier') and\
                     cell.metadata['identifier']==input_cell.metadata['identifier']:
-                return cell
+                return w,i
     raise Exception
 
 
@@ -50,24 +51,27 @@ def check_answer(cell_dict, user, nb):
         flush_buffer(question_instances)
 
     # find cell in notebook and use its metadata, except for answer
-#    try:
-    user_cell = nbformat.NotebookNode(**cell_dict)
-    nb_cell = find_cell(user_cell, nb)
-    nb_cell.metadata['answer'] = user_cell.metadata['answer']
+    try:
+        user_cell = nbformat.NotebookNode(**cell_dict)
+        w,i = get_cell_index(user_cell, nb)
+        nb_cell = nb.worksheets[w].cells[i]
+        nb_cell.metadata['answer'] = user_cell.metadata['answer']
 
-    question = get_question(nb_cell, user)
+        question = get_question(nb_cell, user)
 
-    cell = question.check_answer(nb_cell)
-    cell.cell_type = 'workbook'
+        cell = question.check_answer(nb_cell)
+        cell.cell_type = 'workbook'
 
- #   except Exception as e:
- #       import sys; sys.stderr.write('Error in Checking Answer: ' + str(e) + '\n')
- #       # just return cell to user without doing anything
- #       cell = nbformat.NotebookNode(**cell_dict)
+    except Exception as e:
+        import sys; sys.stderr.write('Error in Checking Answer: ' + str(e) + '\n')
+        # just return cell to user without doing anything
+        cell = nbformat.NotebookNode(**cell_dict)
 
-    import sys; sys.stderr.write('Type: ' + cell.cell_type)
-        
-    return cell
+    # update notebook with cell
+    nb.worksheets[w].cells[i] = copy(cell)
+    nb.worksheets[w].cells[i].cell_type = "code"
+    
+    return cell, nb
 
 def calculate_grade(nb):
     total_points = 0

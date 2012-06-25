@@ -1307,8 +1307,7 @@ var IPython = (function (IPython) {
 	new_cell = nb.insert_cell_below('workbook',i);
 	new_cell.fromJSON(new_cell_json);
 	nb.delete_cell(i);
-	// save the new cell
-	nb.save_notebook();
+	// saving is no longer necessary because it now takes place on the server
     }
 
 

@@ -133,8 +133,10 @@ def check_question(nbname):
     # load notebook
     filename = os.path.join(user_folder(user), nbname+".ipynb")
     nb = nbformat.read(open(filename, 'rb'), 'json')
-    # check_answer returns a new cell to replace the old
-    new_cell = check_answer(cell,user,nb)
+    # check_answer returns a new cell to replace the old, and the updated notebook
+    new_cell, nb = check_answer(cell,user,nb)
+    # save the updated notebook
+    nbformat.write(nb, open(filename, 'wb'), 'json')
     return json.dumps(new_cell)
 
 def initialize_shell():
