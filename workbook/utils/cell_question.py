@@ -154,6 +154,7 @@ class MultipleChoiceQuestion(CellQuestion):
 
         # get seed and add trial number to it
         seed = self.retrieve_seed()
+        cell.metadata.setdefault('correct', False)
         cell.metadata.setdefault('tries', 0)
         self.metadata.update(cell.metadata)
         seed += cell.metadata['tries']
@@ -164,28 +165,24 @@ class MultipleChoiceQuestion(CellQuestion):
         cell.metadata['answer_history'].append(cell.metadata['answer'])
         self.metadata.update(cell.metadata)
 
-        # if the user has not used up all the allowed tries
-        if self.metadata['tries'] < self.metadata['max_tries']:
- 
-            # increment tries count by 1
-            cell.metadata['tries'] += 1
-            self.metadata.update(cell.metadata)
-
-           # this should trigger validate_answer
-            self.answer = cell.metadata['answer']
- 
-           # generate new question if incorrect
-            if not self.metadata['correct']:
-                self.seed += 1
-            # add the comments to the outputs
+        # if user has not gotten question correct already
+        if not self.metadata['correct']:
+            # and user has not used up all their tries
+            if self.metadata['tries'] < self.metadata['max_tries']: 
+                # increment tries count by 1
+                cell.metadata['tries'] += 1
+                self.metadata.update(cell.metadata)
+                # set the answer -- this should trigger validate_answer
+                self.answer = cell.metadata['answer']
+                # generate new question if incorrect
+                if not self.metadata['correct']:
+                    self.seed += 1
+            # otherwise give user message that they've used up all the tries
+            else:
+                self.cell_comments = html_outputs(self.shell, "<h2>Sorry, but you've used up all %(max_tries)d tries for this question. Points: %(points)d / %(max_points)d</h2>" % self.metadata)
+            # either way, return cell output and sync cell metadata
             cell.outputs = self.cell_outputs + self.cell_comments
-            # sync the cell metadata with the server metadata
-
-        else:
-            cell_comments = html_outputs(self.shell, "<h2>Sorry, but you've used up all %(max_tries)d tries for this question. Points: %(points)d / %(max_points)d</h2>" % self.metadata)
-            cell.outputs = self.cell_outputs + cell_comments
-
-        cell.metadata.update(self.metadata)
+            cell.metadata.update(self.metadata)
 
         return cell
 

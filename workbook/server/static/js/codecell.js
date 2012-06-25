@@ -877,6 +877,7 @@ var IPython = (function (IPython) {
 
 
     CodeCell.prototype.fromJSON = function (data) {
+	IPython.Cell.prototype.fromJSON.apply(this, arguments);
         if (data.cell_type === 'code') {
             if (data.input !== undefined) {
                 this.set_text(data.input);
@@ -903,7 +904,7 @@ var IPython = (function (IPython) {
 
 
     CodeCell.prototype.toJSON = function () {
-        var data = {};
+        var data = IPython.Cell.prototype.toJSON.apply(this);
         data.input = this.get_text();
         data.cell_type = 'code';
         if (this.input_prompt_number) {

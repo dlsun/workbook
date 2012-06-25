@@ -54,7 +54,7 @@ var IPython = (function (IPython) {
         end_space.dblclick(function (e) {
             if (that.read_only) return;
             var ncells = that.ncells();
-            that.insert_cell_below('code',ncells-1);
+            that.insert_cell_below('markdown',ncells-1);
         });
         this.element.append(end_space);
         $('div#notebook').addClass('border-box-sizing');
@@ -99,9 +99,9 @@ var IPython = (function (IPython) {
                 return false;
             } else if (event.which === 77 && event.ctrlKey && that.control_key_active == false) {
                 that.control_key_active = true;
-                return false;
-            } else if (event.which === 67 && event.shiftKey) {
-		// Shift-c
+                return false; 
+	    } else if (event.which === 71 && that.control_key_active) {
+		// Grade selected cell = g
                 that.check_cell(that.get_selected_cell());
                 return false;
             } else if (event.which === 88 && that.control_key_active) {
@@ -125,20 +125,20 @@ var IPython = (function (IPython) {
                 that.control_key_active = false;
                 return false;
             } else if (event.which === 65 && that.control_key_active) {
-                // Insert code cell above selected = a
-                that.insert_cell_above('code');
+                // Insert markdown cell above selected = a
+                that.insert_cell_above('markdown');
                 that.control_key_active = false;
                 return false;
             } else if (event.which === 66 && that.control_key_active) {
-                // Insert code cell below selected = b
-                that.insert_cell_below('code');
+                // Insert markdown cell below selected = b
+                that.insert_cell_below('markdown');
                 that.control_key_active = false;
                 return false;
-            } else if (event.which === 89 && that.control_key_active) {
+/*            } else if (event.which === 89 && that.control_key_active) {
                 // To code = y
                 that.to_code();
                 that.control_key_active = false;
-                return false;
+                return false;*/
             } else if (event.which === 77 && that.control_key_active) {
                 // To markdown = m
                 that.to_markdown();
@@ -179,17 +179,17 @@ var IPython = (function (IPython) {
                 that.to_heading(undefined, 6);
                 that.control_key_active = false;
                 return false;
-            } else if (event.which === 79 && that.control_key_active) {
+/*            } else if (event.which === 79 && that.control_key_active) {
                 // Toggle output = o
                 that.toggle_output();
                 that.control_key_active = false;
-                return false;
+                return false;*/
             } else if (event.which === 83 && that.control_key_active) {
                 // Save notebook = s
                 that.save_notebook();
                 that.control_key_active = false;
                 return false;
-            } else if (event.which === 74 && that.control_key_active) {
+/*            } else if (event.which === 74 && that.control_key_active) {
                 // Move cell down = j
                 that.move_cell_down();
                 that.control_key_active = false;
@@ -198,7 +198,7 @@ var IPython = (function (IPython) {
                 // Move cell up = k
                 that.move_cell_up();
                 that.control_key_active = false;
-                return false;
+                return false;*/
             } else if (event.which === 80 && that.control_key_active) {
                 // Select previous = p
                 that.select_prev();
@@ -214,7 +214,7 @@ var IPython = (function (IPython) {
                 that.cell_toggle_line_numbers();
                 that.control_key_active = false;
                 return false;
-            } else if (event.which === 73 && that.control_key_active) {
+/*            } else if (event.which === 73 && that.control_key_active) {
                 // Interrupt kernel = i
                 that.kernel.interrupt();
                 that.control_key_active = false;
@@ -223,7 +223,7 @@ var IPython = (function (IPython) {
                 // Restart kernel = .  # matches qt console
                 that.restart_kernel();
                 that.control_key_active = false;
-                return false;
+                return false;*/
             } else if (event.which === 72 && that.control_key_active) {
                 // Show keyboard shortcuts = h
                 IPython.quick_help.show_keyboard_shortcuts();
@@ -452,7 +452,7 @@ var IPython = (function (IPython) {
     };
 
 
-    // Cell movement
+/*    // Cell movement
 
     Notebook.prototype.move_cell_up = function (index) {
         var i = this.index_or_selected();
@@ -484,7 +484,7 @@ var IPython = (function (IPython) {
         this.dirty = true;
         return this;
     };
-
+*/
 
     Notebook.prototype.sort_cells = function () {
         // This is not working right now. Calling this will actually crash
@@ -1254,7 +1254,7 @@ var IPython = (function (IPython) {
         for (var i=0; i<ncells; i++) {
             cell_array[i] = cells[i].toJSON();
         };
-        data = {
+        var data = {
             // Only handle 1 worksheet for now.
             worksheets : [{cells:cell_array}],
             metadata : this.metadata
@@ -1380,7 +1380,7 @@ var IPython = (function (IPython) {
     Notebook.prototype.load_notebook_success = function (data, status, xhr) {
         this.fromJSON(data);
         if (this.ncells() === 0) {
-            this.insert_cell_below('code');
+            this.insert_cell_below('markdown');
         };
         this.dirty = false;
 /* don't start the kernel...it won't do anything anyway

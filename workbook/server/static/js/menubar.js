@@ -36,7 +36,7 @@ var IPython = (function (IPython) {
 
     MenuBar.prototype.bind_events = function () {
         //  File
-        this.element.find('#new_notebook').click(function () {
+        /*this.element.find('#new_notebook').click(function () {
             window.open($('body').data('baseProjectUrl')+'new');
         });
         this.element.find('#open_notebook').click(function () {
@@ -49,14 +49,11 @@ var IPython = (function (IPython) {
             var notebook_id = IPython.notebook.get_notebook_id();
             var url = $('body').data('baseProjectUrl') + notebook_id + '/copy';
             window.open(url,'_newtab');
-        });
+        });*/
         this.element.find('#save_notebook').click(function () {
             IPython.notebook.save_notebook();
         });
-        this.element.find('#check_notebook').click(function () {
-            IPython.notebook.check_notebook();
-        });
-        this.element.find('#download_ipynb').click(function () {
+        /*this.element.find('#download_ipynb').click(function () {
             var notebook_id = IPython.notebook.get_notebook_id();
             var url = $('body').data('baseProjectUrl') + 'notebooks/' +
                       notebook_id + '?format=json';
@@ -67,7 +64,7 @@ var IPython = (function (IPython) {
             var url = $('body').data('baseProjectUrl') + 'notebooks/' +
                       notebook_id + '?format=py';
             window.open(url,'_newtab');
-        });
+        });*/
         this.element.find('button#print_notebook').click(function () {
             IPython.print_widget.print_notebook();
         });
@@ -90,12 +87,12 @@ var IPython = (function (IPython) {
         this.element.find('#merge_cell_below').click(function () {
             IPython.notebook.merge_cell_below();
         });
-        this.element.find('#move_cell_up').click(function () {
+        /*this.element.find('#move_cell_up').click(function () {
             IPython.notebook.move_cell_up();
         });
         this.element.find('#move_cell_down').click(function () {
             IPython.notebook.move_cell_down();
-        });
+        });*/
         this.element.find('#select_previous').click(function () {
             IPython.notebook.select_prev();
         });
@@ -112,19 +109,19 @@ var IPython = (function (IPython) {
         });
         // Insert
         this.element.find('#insert_cell_above').click(function () {
-            IPython.notebook.insert_cell_above('code');
+            IPython.notebook.insert_cell_above('markdown');
         });
         this.element.find('#insert_cell_below').click(function () {
-            IPython.notebook.insert_cell_below('code');
+            IPython.notebook.insert_cell_below('markdown');
         });
         // Cell
-        this.element.find('#run_cell').click(function () {
+        /*this.element.find('#run_cell').click(function () {
             IPython.notebook.execute_selected_cell();
-        });
+        });*/
         this.element.find('#check_cell').click(function () {
-            IPython.notebook.check_cell();
+            IPython.notebook.check_cell(IPython.notebook.get_selected_sell());
         });
-        this.element.find('#run_cell_in_place').click(function () {
+        /*this.element.find('#run_cell_in_place').click(function () {
             IPython.notebook.execute_selected_cell({terminal:true});
         });
         this.element.find('#run_all_cells').click(function () {
@@ -132,7 +129,7 @@ var IPython = (function (IPython) {
         });
         this.element.find('#to_code').click(function () {
             IPython.notebook.to_code();
-        });
+        });*/
         this.element.find('#to_markdown').click(function () {
             IPython.notebook.to_markdown();
         });
@@ -157,7 +154,7 @@ var IPython = (function (IPython) {
         this.element.find('#to_heading6').click(function () {
             IPython.notebook.to_heading(undefined, 6);
         });
-        this.element.find('#toggle_output').click(function () {
+        /*this.element.find('#toggle_output').click(function () {
             IPython.notebook.toggle_output();
         });
         this.element.find('#clear_all_output').click(function () {
@@ -169,7 +166,7 @@ var IPython = (function (IPython) {
         });
         this.element.find('#restart_kernel').click(function () {
             IPython.notebook.restart_kernel();
-        });
+        });*/
         // Help
         this.element.find('#keyboard_shortcuts').click(function () {
             IPython.quick_help.show_keyboard_shortcuts();

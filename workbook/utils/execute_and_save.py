@@ -118,7 +118,7 @@ def execute_notebook(nb, header_input=''):
                             cell.metadata.update( {'max_points': user_vars['max_points']} )
                         if 'max_tries' in user_vars:
                             cell.metadata.update( {'max_tries': user_vars['max_tries']} )
-                        cell.metadata.update( {'points': 0, 'tries': 0 } )
+                        cell.metadata.update( {'points': 0, 'tries': 0, 'correct': False } )
                     except Exception as e:
                         print "failed to run cell:", repr(e)
                         print cell.input

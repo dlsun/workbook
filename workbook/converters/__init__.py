@@ -5,8 +5,6 @@ from metadata import MetadataSetter
 
 from ..external.nbconvert import ConverterNotebook, Converter
 
-import encrypt, owner
-
 def compose_converters(nb, *converter_instances):
     ofilename = tempfile.mkstemp()[1] + '.ipynb'
     nfilebase = tempfile.mkstemp()[1]

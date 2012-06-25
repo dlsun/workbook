@@ -893,6 +893,7 @@ var IPython = (function (IPython) {
 
 
     WorkbookCell.prototype.fromJSON = function (data) {
+	IPython.Cell.prototype.fromJSON.apply(this, arguments);
         if (data.cell_type === 'workbook') {
             if (data.input !== undefined) {
                 this.set_text(data.input);
@@ -913,7 +914,6 @@ var IPython = (function (IPython) {
                 } else {
                     this.expand();
                 };
-            this.metadata = data.metadata;
             };
         } else {
 	    alert('not a workbook cell');
@@ -922,7 +922,7 @@ var IPython = (function (IPython) {
 
 
     WorkbookCell.prototype.toJSON = function () {
-        var data = {};
+        var data = IPython.Cell.prototype.toJSON.apply(this);;
         data.input = this.get_text();
         data.cell_type = 'code'; // Turn the cell back to 'code' for saving 
         if (this.input_prompt_number) {
@@ -936,7 +936,6 @@ var IPython = (function (IPython) {
         data.outputs = outputs;
         data.language = 'python';
         data.collapsed = this.collapsed;
-	data.metadata = this.metadata;
         return data;
     };
 

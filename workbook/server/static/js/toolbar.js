@@ -45,7 +45,7 @@ var IPython = (function (IPython) {
             text : false
         });
         this.element.find('#cut_copy_paste').buttonset();
-        this.element.find('#move_up_b').button({
+/*        this.element.find('#move_up_b').button({
             icons: {primary: 'ui-icon-arrowthick-1-n'},
             text : false
         });
@@ -53,7 +53,7 @@ var IPython = (function (IPython) {
             icons: {primary: 'ui-icon-arrowthick-1-s'},
             text : false
         });
-        this.element.find('#move_up_down').buttonset();
+        this.element.find('#move_up_down').buttonset();*/
         this.element.find('#insert_above_b').button({
             icons: {primary: 'ui-icon-arrowthickstop-1-n'},
             text : false
@@ -89,24 +89,24 @@ var IPython = (function (IPython) {
         this.element.find('#paste_b').click(function () {
             IPython.notebook.paste_cell();
         });
-        this.element.find('#move_up_b').click(function () {
+/*        this.element.find('#move_up_b').click(function () {
             IPython.notebook.move_cell_up();
         });
         this.element.find('#move_down_b').click(function () {
             IPython.notebook.move_cell_down();
-        });
+        });*/
         this.element.find('#insert_above_b').click(function () {
-            IPython.notebook.insert_cell_above('code');
+            IPython.notebook.insert_cell_above('markdown');
         });
         this.element.find('#insert_below_b').click(function () {
-            IPython.notebook.insert_cell_below('code');
+            IPython.notebook.insert_cell_below('markdown');
         });
-        this.element.find('#run_b').click(function () {
+/*        this.element.find('#run_b').click(function () {
             IPython.notebook.execute_selected_cell();
         });
         this.element.find('#interrupt_b').click(function () {
             IPython.notebook.kernel.interrupt();
-        });
+        });*/
         this.element.find('#cell_type').change(function () {
             var cell_type = $(this).val();
             if (cell_type === 'code') {

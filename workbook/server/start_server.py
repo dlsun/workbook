@@ -8,6 +8,8 @@ from workbook.server.answer_checker import check_answer, calculate_grade
 from workbook.utils.homework_creator import create_assignment
 from workbook.io import *
 
+from workbook.converters.showhide import HideData, MergeData
+
 app = Flask(__name__)
 
 def debug():
@@ -98,17 +100,32 @@ def hw(nbname):
 @app.route('/hw/<nbname>/load', methods=['GET'])
 def load_nb(nbname):
     user = check_user(request)
-    filename = os.path.join(user_folder(user), nbname + '.ipynb')
-    nb = nbformat.read(open(filename, 'rb'), 'json')
+    local_file = os.path.join(user_folder(user), nbname + '.ipynb')
+    tmp_file = os.path.join(user_folder(user), nbname + '_hidden.ipynb')
+    # hide all the input cells
+    hidden = HideData(local_file, tmp_file[:-6])
+    hidden.render()
+    nb = nbformat.read(open(tmp_file, 'rb'), 'json')
+    os.remove(tmp_file)
     return json.dumps(nb)
 
 # save the JSON file of the notebook
 @app.route('/hw/<nbname>/save', methods=['PUT'])
 def save_nb(nbname):
     user = check_user(request)
-    filename = os.path.join(user_folder(user), nbname+".ipynb")
+    # save the active copy temporarily
+    active_file = os.path.join(user_folder(user), nbname + "_active.ipynb")
     nb = nbformat.reads(request.data, 'json')
-    nbformat.write(nb, open(filename, 'wb'), 'json')
+    nbformat.write(nb, open(active_file, 'wb'), 'json')
+    local_file = os.path.join(user_folder(user), nbname + ".ipynb")
+    local_nb = nbformat.read(open(local_file,'rb'), 'json')
+    
+    merged_file = os.path.join(user_folder(user), nbname + "_merged.ipynb")
+    merged = MergeData(active_file, merged_file[:-6], local_nb)
+    merged.render()
+
+    os.rename(merged_file, local_file)
+    os.remove(active_file)
     
     return request.data
 
