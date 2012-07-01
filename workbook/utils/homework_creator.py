@@ -21,21 +21,18 @@ def merge_notebooks(outbase, *notebooks):
         converter.nb.worksheets += notebook_reader.nb.worksheets
     return converter.render()
 
-def create_assignment(assignmentfile, student_info):
-    assignmentbase = os.path.splitext(assignmentfile)[0]
-    student_info = json.load(file(student_info, 'rb'))
-    student_id = student_info['id']
+def create_assignment(assignmentfile, user):
 
-    # make output directory
-
-    odir = os.path.join(PATH_TO_HW_FILES, student_id)
-    if not os.path.exists(odir):
-        os.makedirs(odir)
-
+    # set output directory -- this should exist since we called check_user() first
+    try:
+        odir = os.path.join(PATH_TO_HW_FILES, user['id'])
+    except:
+        import sys; sys.stderr.write('Error creating assignment!')
+        raise
     outfile = os.path.join(odir, os.path.split(assignmentfile)[1])
     shutil.copy(assignmentfile, outfile)
 
-    execute_and_save(outfile, student_info)
+    execute_and_save(outfile, user)
 
 
 

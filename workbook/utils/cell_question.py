@@ -79,11 +79,6 @@ class CellQuestion(traits.HasTraits):
         self.metadata.update(cell.metadata)
         return cell
     
-    def retrieve_seed(self):
-        return json.load(open(os.path.join(PATH_TO_HW_FILES,
-                                           self.user_id, 
-                                           "student_info.json"), 'rb'))['seed']
-
     def check_answer(self, cell_dict):
         """
         checks answer and returns a new cell
@@ -139,43 +134,43 @@ class MultipleChoiceQuestion(CellQuestion):
     comments = {True: "<h2>Good job. Points: %(points)d / %(max_points)d</h2>.",
                 False: "<h2>Try again. Points: %(points)d / %(max_points)d. You have used %(tries)d of %(max_tries)d tries.</h2>"}
     def generate_comments(self):
-        self.cell_comments = html_outputs(self.shell, self.comments[self.metadata['correct']] % self.metadata)
+        self.cell_comments = html_outputs(self.shell, self.comments[self.metadata.readonly['correct']] % self.metadata.readonly)
  
     def validate_answer(self):
         if self.answer:
             correct = (self.answer == self.correct_answer)
-            self.metadata['correct'] = correct
-            self.metadata['points'] = (self.max_points if correct else 0)
-            self.metadata['max_points'] = self.max_points
+            self.metadata.readonly['correct'] = correct
+            self.metadata.readonly['points'] = (self.max_points if correct else 0)
+            self.metadata.readonly['max_points'] = self.max_points
             self.generate_comments()
 
     def check_answer(self, cell_dict):
         cell = nbformat.NotebookNode(**cell_dict)
 
         # get seed and add trial number to it
-        seed = self.retrieve_seed()
-        cell.metadata.setdefault('correct', False)
-        cell.metadata.setdefault('tries', 0)
+        seed = self.seed
+        cell.metadata.readonly.setdefault('correct', False)
+        cell.metadata.readonly.setdefault('tries', 0)
         self.metadata.update(cell.metadata)
-        seed += cell.metadata['tries']
+        seed += cell.metadata.readonly['tries']
         self.seed = seed; self.update_seed()
-         
+        
         # append the answer to the answer history
-        cell.metadata.setdefault('answer_history', [])
-        cell.metadata['answer_history'].append(cell.metadata['answer'])
+        cell.metadata.readonly.setdefault('answer_history', [])
+        cell.metadata.readonly['answer_history'].append(cell.metadata.writeable['answer'])
         self.metadata.update(cell.metadata)
 
         # if user has not gotten question correct already
-        if not self.metadata['correct']:
+        if not self.metadata.readonly['correct']:
             # and user has not used up all their tries
-            if self.metadata['tries'] < self.metadata['max_tries']: 
+            if self.metadata.readonly['tries'] < self.metadata.readonly['max_tries']: 
                 # increment tries count by 1
-                cell.metadata['tries'] += 1
+                cell.metadata.readonly['tries'] += 1
                 self.metadata.update(cell.metadata)
                 # set the answer -- this should trigger validate_answer
-                self.answer = cell.metadata['answer']
+                self.answer = cell.metadata.writeable['answer']
                 # generate new question if incorrect
-                if not self.metadata['correct']:
+                if not self.metadata.readonly['correct']:
                     self.seed += 1
             # otherwise give user message that they've used up all the tries
             else:
@@ -191,14 +186,17 @@ class MultipleChoiceQuestion(CellQuestion):
 class TAGrade(CellQuestion):
 
     def form_cell(self, seed, metadata={}):
-        outputs, cell_metadata = run_cell(self.cell_input, 
+        outputs, cell_info = run_cell(self.cell_input, 
                                           user_variables=['identifier',
                                                           'comments',
                                                           'points',
                                                           'max_points'],
                                           shell=self.shell)[:2]
-        comment_outputs = html_outputs(self.shell, '''<h3>%(comments)s\nPoints: %(points)d/%(max_points)d</h3>''' % cell_metadata)
-        cell_metadata['identifier'] = self.identifier
+        comment_outputs = html_outputs(self.shell, '''<h3>%(comments)s\nPoints: %(points)d/%(max_points)d</h3>''' % cell_info)
+        cell_info['identifier'] = self.identifier
+
+        cell_metadata = {'readonly': {}, 'writeable': {}}
+        cell_metadata['readonly'].update(cell_info)
         cell = nbformat.new_code_cell(input=self.cell_input,
                                       outputs=outputs + comment_outputs,
                                       metadata=cell_metadata)

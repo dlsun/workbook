@@ -52,17 +52,14 @@ class MergeData(nbc.ConverterNotebook):
         if is_workbook_cell(active_cell):
             # get all workbook cells in local copy that match given cell
             local_cells_match = [local_cell for local_cell in self.local_wb_cells \
-                                     if local_cell.metadata.identifier == active_cell.metadata.identifier]
+                                     if local_cell.metadata.readonly.identifier == active_cell.metadata.readonly.identifier]
             # make sure there are exactly 1
             if len(local_cells_match) == 1:
                 local_cell = local_cells_match[0]
+                # make sure input and read-only metadata do not change
                 active_cell.input = local_cell.input
-                if hasattr(active_cell.metadata, 'answer'): 
-                    answer = active_cell.metadata['answer'] # cache answer
-                else:
-                    answer = ''
-                active_cell.metadata = local_cell.metadata
-                active_cell.metadata['answer'] = answer
+                ro = local_cell.metadata['readonly']
+                active_cell.metadata['readonly'] = ro
 
             else:
                 raise Exception
@@ -70,5 +67,6 @@ class MergeData(nbc.ConverterNotebook):
         return nbc.ConverterNotebook.render_code(self, active_cell)
 
 def is_workbook_cell(cell):
-    return hasattr(cell.metadata, 'owner') and cell.metadata['owner']=='workbook' and hasattr(cell.metadata, 'identifier')
+    return hasattr(cell.metadata, 'readonly') and hasattr(cell.metadata.readonly, 'owner') and \
+        cell.metadata.readonly['owner']=='workbook' and hasattr(cell.metadata.readonly, 'identifier')
 

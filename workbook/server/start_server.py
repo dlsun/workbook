@@ -23,8 +23,8 @@ def check_user(request):
         user_num = data[2]
         user_id = data[3][:-13]
     except KeyError:
-        user_name = 'Testing student'
-        user_num = '00000000'
+        user_name = 'Test Student'
+        user_num = '00000001'
         user_id = 'testing'
     user = {'name': user_name, 'num': user_num, 'id': user_id}
     folder = user_folder(user)
@@ -38,6 +38,13 @@ def check_user(request):
     else:
         user['group'] = 'student'
     return user
+
+def generate_student(user):
+    folder = user_folder(user)
+    try:
+        os.makedirs(folder)
+    except OSError:
+        pass
 
 def user_folder(user):
     return os.path.join(PATH_TO_HW_FILES, user['id'])
@@ -53,7 +60,7 @@ def index():
     for template in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES,'*.ipynb')):
         student_file = os.path.join(folder, os.path.split(template)[1])
         if not os.path.exists(student_file):
-            create_assignment(template, os.path.join(folder, 'student_info.json'))
+            create_assignment(template, user)
     nb_files = glob.glob(os.path.join(folder, '*ipynb'))
 
     # open up each file and calculate grade
@@ -72,19 +79,6 @@ def index():
 
     return render_template('index.html',user = user, nb_files=nb_files, hw_data=hw_data)
 
-def generate_student(user):
-    #StudentCreator(user['id'], user['name']).render()
-    folder = user_folder(user)
-    try:
-        os.makedirs(folder)
-    except OSError:
-        pass
-
-    # ultimately the student_info.json file will be removed
-    # (we will just use the student's ID as the seed)
-    open(os.path.join(folder, 'student_info.json'), 'wb').write(json.dumps({'name':user['name'],
-                                                                            'id':user['id'],
-                                                                            'seed':int(user['num'])}))
 
 # load the notebook page
 @app.route('/hw/<nbname>')
@@ -137,10 +131,11 @@ def check_question(nbname):
     new_cell, nb = check_answer(cell,user,nb)
     # save the updated notebook
     nbformat.write(nb, open(filename, 'wb'), 'json')
+    # return the new cell to the user
     return json.dumps(new_cell)
 
 def initialize_shell():
-    generate_student({'id':'server', 'name':'Workbook Server', 'num':00000000})
+    generate_student({'id':'server', 'name':'Workbook Server', 'num':0000001})
     shell = TerminalInteractiveShell()
     for ipynb in glob.glob(os.path.join(PATH_TO_HW_TEMPLATES, '*ipynb')):
         nb = nbformat.read(open(ipynb, 'rb'), 'json')

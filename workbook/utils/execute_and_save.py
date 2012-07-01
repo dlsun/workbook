@@ -68,8 +68,6 @@ def run_cell(cell_input, user_variables=None, user_expressions=None):
         returned_user_variables = shell_msg['content']['user_variables']
         for key, value in returned_user_variables.items():
             returned_user_variables[key] = eval(value)
-        #if returned_user_variables:
-        #    sys.stderr.write(str(returned_user_variables) + '\n\n')
 
     if 'user_expressions' in shell_msg['content'].keys():
         returned_user_expressions.update(shell_msg['content']['user_expressions'])
@@ -106,26 +104,29 @@ def execute_notebook(nb, header_input=''):
             if cell.cell_type == 'code':
                 # set ownership of all existing code cells to instructor
                 # (maybe we should do this for all cells, not just code cells?)
-                cell.metadata.update( {'owner': 'workbook',
-                                       'group': 'teacher'
-                                       })
+                cell.metadata['readonly'] = {'owner': 'workbook',
+                                             'group': 'teacher'
+                                             }
+                cell.metadata['writeable'] = {}
                 if ''.join(cell.input).strip()[:4] == '%%wb':
                     try:
+                        # run the header first to set seed and user_id
                         run_cell(header_input)
+                        # run the cell, catching the 
                         outs, user_vars = run_cell(cell.input, user_variables = ['identifier',
                                                                                  'max_points',
                                                                                  'max_tries'])[:-1]
                         if 'identifier' in user_vars:
                             import sys; sys.stderr.write('Now generating question: ' + user_vars['identifier'] + '\n')
-                            cell.metadata.update( {'identifier': user_vars['identifier']} )
+                            cell.metadata.readonly.update( {'identifier': user_vars['identifier']} )
                         if 'max_points' in user_vars:
-                            cell.metadata.update( {'max_points': user_vars['max_points']} )
+                            cell.metadata.readonly.update( {'max_points': user_vars['max_points']} )
                         if 'max_tries' in user_vars:
-                            cell.metadata.update( {'max_tries': user_vars['max_tries']} )
-                        cell.metadata.update( {'points': 0, 
-                                               'tries': 0, 
-                                               'correct': False,
-                                               } )
+                            cell.metadata.readonly.update( {'max_tries': user_vars['max_tries']} )
+                        cell.metadata.readonly.update( {'points': 0, 
+                                                        'tries': 0, 
+                                                        'correct': False,
+                                                        } )
                     except Exception as e:
                         print "failed to run cell:", repr(e)
                         print cell.input
@@ -141,9 +142,11 @@ def execute_notebook(nb, header_input=''):
                 cell.outputs = outs
                 prompt_number += 1
 
-def execute_and_save(ipynb, student_info):
-    seed = student_info['seed']
-    header_input = 'seed=%d; user_id="%s"' % (seed, student_info['id'])
+def execute_and_save(ipynb, user):
+    """
+    executes a notebook and saves it
+    """
+    header_input = 'seed=%d; user_id="%s"' % (int(user['num']), user['id'])
     nb = read(open(ipynb, 'rb'), 'json')
     execute_notebook(nb, header_input=header_input)
     write(nb, open(ipynb, 'wb'), 'json')

@@ -1234,8 +1234,8 @@ var IPython = (function (IPython) {
                     cell_data.cell_type = 'raw';
                 }
                 
-                if (cell_data.metadata !== undefined) {
-                    if (cell_data.metadata.owner == 'workbook'){
+                if (cell_data.metadata !== undefined && cell_data.metadata.readonly !== undefined) {
+                    if (cell_data.metadata.readonly.owner == 'workbook'){
                          cell_data.cell_type = 'workbook';
                     };
                 }
@@ -1276,13 +1276,12 @@ var IPython = (function (IPython) {
 	form = cell.element.find('form')[0];
 	if(form !== undefined) {
 	    if(form.value !== undefined) {
-		// is this necessary?
-		// if(cell.metadata === undefined) {
-                //     cell.metadata = {'identifier':null, 'answer':null};
-		// };
-		// pass the identifier and answer in the metadata
-		// cell.metadata.identifier = form.name;
-		cell.metadata.answer = form.value;
+		// append the answer to the writeable part of metadata
+		if(cell.metadata.writeable == undefined) {
+		    cell.metadata.writeable = {answer: form.value};
+		} else {
+		    cell.metadata.writeable['answer'] = form.value;
+		}
 		var settings = {
 		    processData : false,
 		    cache : false,
@@ -1307,7 +1306,7 @@ var IPython = (function (IPython) {
 	new_cell = nb.insert_cell_below('workbook',i);
 	new_cell.fromJSON(new_cell_json);
 	nb.delete_cell(i);
-	// saving is no longer necessary because it now takes place on the server
+	// saving is not necessary because it now takes place on the server
     }
 
 

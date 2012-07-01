@@ -27,7 +27,7 @@ class HomeworkMagics(Magics):
     @argument(
         '--seed', 
         type=int,
-        default=None,
+        default=2,
         help='Random seed to set.'
         )
     @argument(
@@ -68,6 +68,11 @@ class HomeworkMagics(Magics):
         else:
             user_id = args.user_id
 
+        if 'seed' in self.shell.user_ns:
+            seed = int(self.shell.user_ns['seed'])
+        else:
+            seed = args.seed
+
         # generate question and attach shell
         question = MultipleChoiceQuestion(cell_input=cell,
                                       user_id=user_id,
@@ -75,12 +80,6 @@ class HomeworkMagics(Magics):
                                       max_points=args.max_points,
                                       max_tries=args.max_tries,
                                       shell=self.shell)
-        
-        if args.seed is None:
-            if 'seed' in self.shell.user_ns:
-                seed = int(self.shell.user_ns['seed'])
-            else:
-                seed = 2
         # this should trigger generate_cell_outputs in CellQuestion
         question.seed = seed
 
@@ -111,6 +110,11 @@ class HomeworkMagics(Magics):
         else:
             user_id = args.user_id
 
+        if 'seed' in self.shell.user_ns:
+            seed = int(self.shell.user_ns['seed'])
+        else:
+            seed = args.seed
+
         # add identifier and max_points to the cell
         # (may be removed once we have ability to set cell metadata using magic)
         cell = ("identifier = '%s' \n" % args.identifier) + ('max_points = %d \n' % args.max_points) + cell
@@ -118,12 +122,9 @@ class HomeworkMagics(Magics):
         grade = TAGrade(cell_input=cell, identifier=args.identifier,
                         user_id=user_id)
         grade.shell = self.shell 
-        if args.seed is None:
-            if 'seed' in self.shell.user_ns:
-                seed = int(self.shell.user_ns['seed'])
-            else:
-                seed = 2
+
         grade.seed = seed
+
         cell = grade.form_cell(seed)
 
         question_types[args.identifier] = grade
@@ -137,9 +138,4 @@ ip.register_magics(hwmagic)
 
 def wb_latex(text):
     publish_display_data("HomeworkMagic", {'text/latex':text})
-
-def publish_workbook_metadata(metadata):
-    publish_display_data("HomeworkBuilder", 
-                         {"application/json":{"workbook_metadata":
-                                                  metadata}})
 
