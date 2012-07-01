@@ -41,6 +41,7 @@ def get_cell_index(input_cell, nb):
                     hasattr(cell.metadata, 'readonly') and hasattr(cell.metadata.readonly,'identifier') and \
                     cell.metadata.readonly['identifier']==input_cell.metadata['readonly']['identifier']:
                 return w,i
+    import sys; sys.stderr.write("\nError: Couldn't find cell in notebook!\n\n")
     raise Exception
 
 
@@ -52,24 +53,24 @@ def check_answer(cell_dict, user, nb):
         flush_buffer(question_instances)
 
     # use writeable metadata from the user cell, keep all other metadata from server copy
-#    try:
-    user_cell = nbformat.NotebookNode(**cell_dict)
-    w,i = get_cell_index(user_cell, nb)
-    nb_cell = nb.worksheets[w].cells[i]
-    if hasattr(user_cell, 'metadata') and 'writeable' in user_cell.metadata:
-        nb_cell.metadata.writeable = user_cell.metadata['writeable']
-    else:
-        nb_cell.metadata.writeable = {'answer': ''}
+    try:
+        user_cell = nbformat.NotebookNode(**cell_dict)
+        w,i = get_cell_index(user_cell, nb)
+        nb_cell = nb.worksheets[w].cells[i]
+        if hasattr(user_cell, 'metadata') and 'writeable' in user_cell.metadata:
+            nb_cell.metadata.writeable = user_cell.metadata['writeable']
+        else:
+            nb_cell.metadata.writeable = {'answer': ''}
 
-    question = get_question(nb_cell, user)
+        question = get_question(nb_cell, user)
 
-    cell = question.check_answer(nb_cell)
-    cell.cell_type = 'workbook'
+        cell = question.check_answer(nb_cell)
+        cell.cell_type = 'workbook'
 
-#    except Exception as e:
-#        import sys; sys.stderr.write('Error in Checking Answer: ' + str(e) + '\n')
+    except Exception as e:
+        import sys; sys.stderr.write('Error in Checking Answer: ' + str(e) + '\n')
         # just return cell to user without doing anything
-#    cell = nbformat.NotebookNode(**cell_dict)
+        cell = nbformat.NotebookNode(**cell_dict)
 
     # update notebook with cell
     nb.worksheets[w].cells[i] = copy(cell)
